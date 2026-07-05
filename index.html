@@ -8,6 +8,8 @@
         :root {
             --line-green: #06C755;
             --line-hover: #05b34c;
+            --delete-red: #ef4444;
+            --move-blue: #3b82f6;
             --bg-color: #f8fafc;
             --card-bg: #ffffff;
         }
@@ -20,7 +22,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            -webkit-user-select: none; /* 防止長輩長按連點變選取文字 */
+            -webkit-user-select: none;
             user-select: none;
         }
 
@@ -32,12 +34,12 @@
             min-height: calc(100vh - 32px);
         }
 
-        /* 文字方塊清單區（放大、滿版） */
+        /* 文字方塊清單區 */
         .text-grid {
             display: flex;
             flex-direction: column;
             gap: 16px;
-            flex-grow: 1; /* 盡量佔滿空間 */
+            flex-grow: 1;
             margin-bottom: 30px;
         }
 
@@ -47,21 +49,26 @@
             border-radius: 16px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.06);
             border: 2px solid #e2e8f0;
-            border-left: 12px solid var(--line-green); /* 加粗左側綠邊 */
+            border-left: 12px solid var(--line-green);
             cursor: pointer;
             transition: transform 0.1s, background-color 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
         }
 
-        .text-card:active {
+        /* 正常瀏覽模式下的點擊效果 */
+        .text-card.view-mode:active {
             transform: scale(0.98);
             background-color: #f0fdf4;
         }
 
+        .card-body {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
         .text-content {
-            font-size: 28px; /* 針對長輩特別加大字體 */
+            font-size: 28px;
             font-weight: bold;
             color: #1e293b;
             line-height: 1.4;
@@ -76,13 +83,39 @@
             flex-shrink: 0;
         }
 
-        /* 下方維護區塊 */
+        /* 管理模式下的按鈕區塊 */
+        .admin-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #cbd5e1;
+        }
+
+        .admin-btn {
+            flex: 1;
+            padding: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .btn-delete { background-color: var(--delete-red); }
+        .btn-move { background-color: var(--move-blue); }
+
+        /* 下方管理區塊 */
         .footer-admin {
-            margin-top: auto; /* 推到最下面 */
+            margin-top: auto;
             width: 100%;
         }
 
-        /* 展開/收合 按鈕 */
         .toggle-btn {
             background: none;
             border: none;
@@ -94,7 +127,7 @@
             text-align: center;
         }
 
-        /* 動態展開的內容 (預設隱藏) */
+        /* 動態展開內容 */
         .admin-content {
             max-height: 0;
             overflow: hidden;
@@ -105,112 +138,120 @@
         }
 
         .admin-content.open {
-            max-height: 250px; /* 展開後的最大高度 */
-            padding: 16px;
+            max-height: 400px; /* 提高最大高度以容納新版面 */
+            padding: 20px;
             border: 1px solid #e2e8f0;
             margin-top: 10px;
         }
 
+        /* 改為垂直全寬排列，按鈕超大置中 */
         .input-group {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
+        }
+
+        input[type="password"], textarea {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 20px;
+            box-sizing: border-box;
         }
 
         textarea {
-            padding: 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 18px;
-            height: 70px;
+            height: 90px;
             resize: none;
         }
 
-        .input-row {
-            display: flex;
-            gap: 10px;
-        }
-
-        input[type="password"] {
-            padding: 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 18px;
-            flex-grow: 1;
-        }
-
-        .submit-btn {
-            background-color: var(--line-green);
+        .big-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 22px;
+            font-weight: bold;
             color: white;
             border: none;
-            padding: 0 20px;
-            font-size: 18px;
             border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        .submit-btn:hover {
-            background-color: var(--line-hover);
-        }
+        .btn-green { background-color: var(--line-green); }
+        .btn-orange { background-color: #f97316; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- 長輩點選區 -->
     <div class="text-grid" id="textGrid">
-        <!-- 預設內容會由 JavaScript 渲染 -->
-    </div>
+        </div>
 
-    <!-- 最下方的動態新增區 -->
     <div class="footer-admin">
-        <button class="toggle-btn" id="toggleBtn" onclick="toggleAdminPanel()">⚙️ 管理功能 (點擊展開)</button>
+        <button class="toggle-btn" id="toggleBtn" onclick="toggleAdminPanel()">⚙️ 管理與維護功能 (點擊展開)</button>
         
         <div class="admin-content" id="adminPanel">
             <div class="input-group">
+                <input type="password" id="password" placeholder="請輸入管理密碼">
+                
+                <button class="big-btn btn-orange" id="modeBtn" onclick="verifyAndToggleMode()">進入管理模式 (刪除/排序)</button>
+                
+                <hr style="width:100%; border:0; border-top:1px solid #e2e8f0; margin: 5px 0;">
+                
                 <textarea id="newText" placeholder="請輸入要新增的問候語..."></textarea>
-                <div class="input-row">
-                    <input type="password" id="password" placeholder="請輸入管理密碼">
-                    <button class="submit-btn" onclick="addTextBox()">新增</button>
-                </div>
+                <button class="big-btn btn-green" onclick="addTextBox()">確認新增方塊</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // 1. 設定您的管理密碼（請在此處修改）
+    // 1. 設定您的管理密碼
     const ADMIN_PASSWORD = "1234"; 
 
-    // 2. 依照您的需求調整的預設文字清單
-    let defaultPhrases = [
-        "大家好",
-        "大家早安",
-        "大家午安",
-        "新年快樂",
-        "佳節愉快"
-    ];
+    // 2. 預設文字清單
+    let defaultPhrases = ["大家好", "大家早安", "大家午安", "新年快樂", "佳節愉快"];
 
-    // 從 LocalStorage 讀取自訂資料，若無則使用預設值
-    let phrases = JSON.parse(localStorage.getItem('line_phrases_senior')) || defaultPhrases;
+    // 狀態管理
+    let phrases = JSON.parse(localStorage.getItem('line_phrases_senior_v2')) || defaultPhrases;
+    let isManagementMode = false; // 是否處於管理模式
 
     // 渲染網頁上的文字方塊
     function renderCards() {
         const grid = document.getElementById('textGrid');
         grid.innerHTML = ''; 
 
-        phrases.forEach((text) => {
+        phrases.forEach((text, index) => {
             const card = document.createElement('div');
-            card.className = 'text-card';
+            // 如果是管理模式，不加上 view-mode 點擊效果
+            card.className = `text-card ${isManagementMode ? '' : 'view-mode'}`;
             
-            // 點擊卡片觸發 LINE 分享
-            card.onclick = () => shareToLine(text);
+            // 點擊事件：管理模式下點擊無效（需點按鈕），正常模式下點擊分享 LINE
+            if (!isManagementMode) {
+                card.onclick = () => shareToLine(text);
+            }
 
-            card.innerHTML = `
-                <div class="text-content">${escapeHtml(text)}</div>
-                <div class="share-icon">➔</div>
+            // 基本內容
+            let cardHtml = `
+                <div class="card-body">
+                    <div class="text-content">${escapeHtml(text)}</div>
+                    ${isManagementMode ? '' : '<div class="share-icon">➔</div>'}
+                </div>
             `;
+
+            // 如果是管理模式，插入刪除與排序按鈕
+            if (isManagementMode) {
+                cardHtml += `
+                    <div class="admin-controls">
+                        <button class="admin-btn btn-move" onclick="moveCard(${index}, -1)">⬆️ 上移</button>
+                        <button class="admin-btn btn-move" onclick="moveCard(${index}, 1)">⬇️ 下移</button>
+                        <button class="admin-btn btn-delete" onclick="deleteCard(${index})">🗑️ 刪除</button>
+                    </div>
+                `;
+            }
+
+            card.innerHTML = cardHtml;
             grid.appendChild(card);
         });
     }
@@ -228,54 +269,101 @@
         
         if (panel.classList.contains('open')) {
             panel.classList.remove('open');
-            btn.innerText = "⚙️ 管理功能 (點擊展開)";
+            btn.innerText = "⚙️ 管理與維護功能 (點擊展開)";
+            // 關閉選單時自動退出管理模式，保護資料
+            isManagementMode = false;
+            document.getElementById('modeBtn').innerText = "進入管理模式 (刪除/排序)";
+            renderCards();
         } else {
             panel.classList.add('open');
-            btn.innerText = "⚙️ 管理功能 (點擊收合)";
-            // 展開時自動滾動到底部，方便看見輸入框
+            btn.innerText = "⚙️ 管理與維護功能 (點擊收合)";
             setTimeout(() => {
                 window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
             }, 200);
         }
     }
 
+    // 驗證密碼並切換管理模式
+    function verifyAndToggleMode() {
+        const passwordInput = document.getElementById('password');
+        if (passwordInput.value !== ADMIN_PASSWORD) {
+            alert('密碼錯誤！');
+            passwordInput.value = '';
+            return;
+        }
+
+        isManagementMode = !isManagementMode;
+        const modeBtn = document.getElementById('modeBtn');
+        
+        if (isManagementMode) {
+            modeBtn.innerText = "退出管理模式 (已鎖定)";
+            alert('已進入管理模式！您可以進行刪除與排序。');
+        } else {
+            modeBtn.innerText = "進入管理模式 (刪除/排序)";
+            passwordInput.value = ''; // 退出時清空密碼
+        }
+        renderCards();
+    }
+
     // 新增文字方塊
     function addTextBox() {
         const textInput = document.getElementById('newText');
         const passwordInput = document.getElementById('password');
-
         const textValue = textInput.value.trim();
-        const passwordValue = passwordInput.value;
 
         if (!textValue) {
             alert('請輸入文字內容！');
             return;
         }
 
-        if (passwordValue !== ADMIN_PASSWORD) {
-            alert('密碼錯誤，無法新增！');
-            passwordInput.value = '';
+        if (passwordInput.value !== ADMIN_PASSWORD) {
+            alert('請先在密碼欄輸入正確密碼再點擊新增！');
             return;
         }
 
         phrases.push(textValue);
-        localStorage.setItem('line_phrases_senior', JSON.stringify(phrases));
-
-        renderCards();
+        saveData();
+        
         textInput.value = '';
-        passwordInput.value = '';
-        toggleAdminPanel(); // 新增成功後自動收起來
+        renderCards();
         alert('成功新增文字方塊！');
+    }
+
+    // 刪除功能
+    function deleteCard(index) {
+        if (confirm(`確定要刪除「${phrases[index]}」嗎？`)) {
+            phrases.splice(index, 1);
+            saveData();
+            renderCards();
+        }
+    }
+
+    // 排序功能 (direction: -1 代表往上移動, 1 代表往下移動)
+    function moveCard(index, direction) {
+        const targetIndex = index + direction;
+        
+        // 超出邊界就不處理
+        if (targetIndex < 0 || targetIndex >= phrases.length) return;
+        
+        // 交換位置
+        const temp = phrases[index];
+        phrases[index] = phrases[targetIndex];
+        phrases[targetIndex] = temp;
+        
+        saveData();
+        renderCards();
+    }
+
+    // 儲存資料
+    function saveData() {
+        localStorage.setItem('line_phrases_senior_v2', JSON.stringify(phrases));
     }
 
     // 安全過濾
     function escapeHtml(text) {
         return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
     // 初始化
