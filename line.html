@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINE 快速分享工具</title>
+    <style>
+        :root {
+            --primary-color: #06C755; /* LINE 綠色 */
+            --primary-hover: #05b34c;
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+        }
+
+        /* 密碼與新增區塊 */
+        .admin-panel {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        input, textarea {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            resize: vertical;
+            height: 80px;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* 文字方塊列表區 */
+        .text-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .text-card {
+            background: var(--card-bg);
+            padding: 18px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            border-left: 5px solid var(--primary-color);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .text-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .text-content {
+            font-size: 16px;
+            line-height: 1.5;
+            white-space: pre-wrap; /* 保留換行 */
+            word-break: break-all;
+        }
+
+        .share-hint {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #999;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>💬 LINE 快速問候分享</h1>
+
+    <div class="admin-panel">
+        <div class="input-group">
+            <textarea id="newText" placeholder="請輸入欲新增的問候語或問答文字..."></textarea>
+            <div class="input-row">
+                <input type="password" id="password" placeholder="請輸入管理密碼">
+                <button onclick="addTextBox()">新增方塊</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-grid" id="textGrid">
+        </div>
+</div>
+
+<script>
+    // 設定您的管理密碼（請在此處修改）
+    const ADMIN_PASSWORD = "1234"; 
+
+    // 預設的問候文字列表
+    let defaultPhrases = [
+        "早安！祝你有個美好的一天 ☀️",
+        "您好，請問有什麼我可以協助您的嗎？😊",
+        "感謝您的回覆，我們會盡快處理！",
+        "今天辛苦了！下班回家路上小心 🚗"
+    ];
+
+    // 從 LocalStorage 讀取自訂資料，若無則使用預設值
+    let phrases = JSON.parse(localStorage.getItem('line_phrases')) || defaultPhrases;
+
+    // 渲染網頁上的文字方塊
+    function renderCards() {
+        const grid = document.getElementById('textGrid');
+        grid.innerHTML = ''; // 清空舊資料
+
+        phrases.forEach((text) => {
+            const card = document.createElement('div');
+            card.className = 'text-card';
+            
+            // 點擊卡片觸發 LINE 分享
+            card.onclick = () => shareToLine(text);
+
+            card.innerHTML = `
+                <div class="text-content">${escapeHtml(text)}</div>
+                <div class="share-hint">點選直接分享至 LINE ➔</div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    // 呼叫 LINE 分享 API
+    function shareToLine(text) {
+        // 使用 LINE 的 URL Scheme 進行分享
+        const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+        window.open(lineUrl, '_blank');
+    }
+
+    // 新增文字方塊功能
+    function addTextBox() {
+        const textInput = document.getElementById('newText');
+        const passwordInput = document.getElementById('password');
+
+        const textValue = textInput.value.trim();
+        const passwordValue = passwordInput.value;
+
+        // 驗證輸入
+        if (!textValue) {
+            alert('請輸入文字內容！');
+            return;
+        }
+
+        // 驗證密碼
+        if (passwordValue !== ADMIN_PASSWORD) {
+            alert('密碼錯誤，無法新增！');
+            passwordInput.value = ''; // 清空密碼
+            return;
+        }
+
+        // 新增資料並儲存至 LocalStorage
+        phrases.push(textValue);
+        localStorage.setItem('line_phrases', JSON.stringify(phrases));
+
+        // 重新渲染並清空輸入框
+        renderCards();
+        textInput.value = '';
+        passwordInput.value = '';
+        alert('成功新增文字方塊！');
+    }
+
+    // 防止 XSS 安全漏洞的字串處理
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // 初始化網頁
+    renderCards();
+</script>
+
+</body>
+</html>
