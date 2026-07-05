@@ -54,7 +54,6 @@
             transition: transform 0.1s, background-color 0.2s;
         }
 
-        /* 正常瀏覽模式下的點擊效果 */
         .text-card.view-mode:active {
             transform: scale(0.98);
             background-color: #f0fdf4;
@@ -127,7 +126,6 @@
             text-align: center;
         }
 
-        /* 動態展開內容 */
         .admin-content {
             max-height: 0;
             overflow: hidden;
@@ -138,13 +136,12 @@
         }
 
         .admin-content.open {
-            max-height: 400px; /* 提高最大高度以容納新版面 */
+            max-height: 400px;
             padding: 20px;
             border: 1px solid #e2e8f0;
             margin-top: 10px;
         }
 
-        /* 改為垂直全寬排列，按鈕超大置中 */
         .input-group {
             display: flex;
             flex-direction: column;
@@ -180,6 +177,15 @@
 
         .btn-green { background-color: var(--line-green); }
         .btn-orange { background-color: #f97316; margin-bottom: 10px; }
+
+        /* 隱密、不起眼的瀏覽次數樣式 */
+        .counter-view {
+            text-align: center;
+            font-size: 11px;
+            color: #cbd5e1; /* 極淡的灰色 */
+            margin-top: 15px;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
@@ -194,28 +200,23 @@
         <div class="admin-content" id="adminPanel">
             <div class="input-group">
                 <input type="password" id="password" placeholder="請輸入管理密碼">
-                
                 <button class="big-btn btn-orange" id="modeBtn" onclick="verifyAndToggleMode()">進入管理模式 (刪除/排序)</button>
-                
                 <hr style="width:100%; border:0; border-top:1px solid #e2e8f0; margin: 5px 0;">
-                
                 <textarea id="newText" placeholder="請輸入要新增的問候語..."></textarea>
                 <button class="big-btn btn-green" onclick="addTextBox()">確認新增方塊</button>
             </div>
         </div>
     </div>
+
+    <div class="counter-view" id="viewCounter">頁面載入中...</div>
 </div>
 
 <script>
-    // 1. 設定您的管理密碼
     const ADMIN_PASSWORD = "1234"; 
-
-    // 2. 預設文字清單
     let defaultPhrases = ["大家好", "大家早安", "大家午安", "新年快樂", "佳節愉快"];
 
-    // 狀態管理
     let phrases = JSON.parse(localStorage.getItem('line_phrases_senior_v2')) || defaultPhrases;
-    let isManagementMode = false; // 是否處於管理模式
+    let isManagementMode = false;
 
     // 渲染網頁上的文字方塊
     function renderCards() {
@@ -224,15 +225,12 @@
 
         phrases.forEach((text, index) => {
             const card = document.createElement('div');
-            // 如果是管理模式，不加上 view-mode 點擊效果
             card.className = `text-card ${isManagementMode ? '' : 'view-mode'}`;
             
-            // 點擊事件：管理模式下點擊無效（需點按鈕），正常模式下點擊分享 LINE
             if (!isManagementMode) {
                 card.onclick = () => shareToLine(text);
             }
 
-            // 基本內容
             let cardHtml = `
                 <div class="card-body">
                     <div class="text-content">${escapeHtml(text)}</div>
@@ -240,7 +238,6 @@
                 </div>
             `;
 
-            // 如果是管理模式，插入刪除與排序按鈕
             if (isManagementMode) {
                 cardHtml += `
                     <div class="admin-controls">
@@ -270,7 +267,6 @@
         if (panel.classList.contains('open')) {
             panel.classList.remove('open');
             btn.innerText = "⚙️ 管理與維護功能 (點擊展開)";
-            // 關閉選單時自動退出管理模式，保護資料
             isManagementMode = false;
             document.getElementById('modeBtn').innerText = "進入管理模式 (刪除/排序)";
             renderCards();
@@ -300,7 +296,7 @@
             alert('已進入管理模式！您可以進行刪除與排序。');
         } else {
             modeBtn.innerText = "進入管理模式 (刪除/排序)";
-            passwordInput.value = ''; // 退出時清空密碼
+            passwordInput.value = '';
         }
         renderCards();
     }
@@ -338,14 +334,11 @@
         }
     }
 
-    // 排序功能 (direction: -1 代表往上移動, 1 代表往下移動)
+    // 排序功能
     function moveCard(index, direction) {
         const targetIndex = index + direction;
-        
-        // 超出邊界就不處理
         if (targetIndex < 0 || targetIndex >= phrases.length) return;
         
-        // 交換位置
         const temp = phrases[index];
         phrases[index] = phrases[targetIndex];
         phrases[targetIndex] = temp;
@@ -366,8 +359,20 @@
             .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
+    // 瀏覽次數計數器功能
+    function updateViewCounter() {
+        // 從本機取得目前的瀏覽次數，若沒有就從 0 開始
+        let currentViews = parseInt(localStorage.getItem('page_view_count')) || 0;
+        currentViews++; // 次數加 1
+        localStorage.setItem('page_view_count', currentViews); // 存回本機
+        
+        // 顯示在最下方
+        document.getElementById('viewCounter').innerText = `瀏覽次數：${currentViews}`;
+    }
+
     // 初始化
     renderCards();
+    updateViewCounter();
 </script>
 
 </body>
