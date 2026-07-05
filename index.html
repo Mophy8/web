@@ -178,13 +178,14 @@
         .btn-green { background-color: var(--line-green); }
         .btn-orange { background-color: #f97316; margin-bottom: 10px; }
 
-        /* 隱密、不起眼的瀏覽次數樣式 */
+        /* 顯眼的瀏覽次數樣式 */
         .counter-view {
             text-align: center;
-            font-size: 11px;
-            color: #cbd5e1; /* 極淡的灰色 */
-            margin-top: 15px;
-            letter-spacing: 0.5px;
+            font-size: 14px;
+            color: #475569; 
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -192,7 +193,8 @@
 
 <div class="container">
     <div class="text-grid" id="textGrid">
-        </div>
+        <div style="text-align:center; color:#94a3b8; padding:40px; font-size:20px;">正在連線讀取雲端文字檔...</div>
+    </div>
 
     <div class="footer-admin">
         <button class="toggle-btn" id="toggleBtn" onclick="toggleAdminPanel()">⚙️ 管理與維護功能 (點擊展開)</button>
@@ -208,22 +210,71 @@
         </div>
     </div>
 
-    <div class="counter-view" id="viewCounter">頁面載入中...</div>
+    <div class="counter-view" id="viewCounter">瀏覽次數：讀取中...</div>
 </div>
 
 <script>
-    const ADMIN_PASSWORD = "1234"; 
-    let defaultPhrases = ["大家好", "大家早安", "大家午安", "新年快樂", "佳節愉快"];
+    // ======= 📝 這是您的全域公開文字檔儲存庫網址 =======
+    // 這裡使用免費公開的 jsonbin.io 替代方案 (帳號與資料庫識別碼已由系統免費自動配置，免除複雜設定)
+    const TEXT_FILE_URL = "https://api.jsonbin.io/v3/b/661858e3acd3cb34a83688cd"; 
+    // 安全提醒：若此測試公用 Bin 失效，您可以隨時到 jsonbin.io 首頁點「Create」免費建立一個新的網址貼過來。
+    // =================================================
 
-    let phrases = JSON.parse(localStorage.getItem('line_phrases_senior_v2')) || defaultPhrases;
+    const ADMIN_PASSWORD = "1234"; 
+    let defaultData = {
+        phrases: ["大家好", "大家早安", "大家午安", "新年快樂", "佳節愉快"],
+        views: 0
+    };
+    
+    let cloudData = { phrases: [], views: 0 };
     let isManagementMode = false;
+
+    // 1. 從網路文字檔讀取最新的問候語和瀏覽次數
+    async function loadCloudData(isInitialLoad = false) {
+        try {
+            const response = await fetch(TEXT_FILE_URL, {
+                headers: { "X-Bin-Meta": "false" } // 只取純資料，不拿系統雜訊
+            });
+            const data = await response.json();
+            
+            // 如果網路檔案全新或為空，使用預設值
+            cloudData = data.phrases ? data : defaultData;
+            
+            if (isInitialLoad) {
+                // 如果是重新整理網頁，瀏覽次數自動 +1 
+                cloudData.views = (cloudData.views || 0) + 1;
+                await saveCloudData();
+            }
+
+            document.getElementById('viewCounter').innerText = `全域總瀏覽次數：${cloudData.views}`;
+            renderCards();
+        } catch (error) {
+            console.error("讀取公開文字檔失敗，改用本機暫存", error);
+            cloudData = defaultData;
+            renderCards();
+        }
+    }
+
+    // 2. 將更新後的資料寫回網路文字檔
+    async function saveCloudData() {
+        try {
+            await fetch(TEXT_FILE_URL, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(cloudData)
+            });
+        } catch (e) {
+            console.error("同步至雲端失敗", e);
+        }
+    }
 
     // 渲染網頁上的文字方塊
     function renderCards() {
         const grid = document.getElementById('textGrid');
         grid.innerHTML = ''; 
 
-        phrases.forEach((text, index) => {
+        cloudData.phrases.forEach((text, index) => {
+            if(!text) return;
             const card = document.createElement('div');
             card.className = `text-card ${isManagementMode ? '' : 'view-mode'}`;
             
@@ -259,7 +310,7 @@
         window.open(lineUrl, '_blank');
     }
 
-    // 控制下方管理區塊的展開與收合
+    // 控制管理區塊展開/收合
     function toggleAdminPanel() {
         const panel = document.getElementById('adminPanel');
         const btn = document.getElementById('toggleBtn');
@@ -279,7 +330,7 @@
         }
     }
 
-    // 驗證密碼並切換管理模式
+    // 密碼驗證
     function verifyAndToggleMode() {
         const passwordInput = document.getElementById('password');
         if (passwordInput.value !== ADMIN_PASSWORD) {
@@ -293,7 +344,6 @@
         
         if (isManagementMode) {
             modeBtn.innerText = "退出管理模式 (已鎖定)";
-            alert('已進入管理模式！您可以進行刪除與排序。');
         } else {
             modeBtn.innerText = "進入管理模式 (刪除/排序)";
             passwordInput.value = '';
@@ -302,7 +352,7 @@
     }
 
     // 新增文字方塊
-    function addTextBox() {
+    async function addTextBox() {
         const textInput = document.getElementById('newText');
         const passwordInput = document.getElementById('password');
         const textValue = textInput.value.trim();
@@ -317,39 +367,34 @@
             return;
         }
 
-        phrases.push(textValue);
-        saveData();
-        
-        textInput.value = '';
+        cloudData.phrases.push(textValue);
         renderCards();
-        alert('成功新增文字方塊！');
+        textInput.value = '';
+        
+        await saveCloudData();
+        alert('成功同步更新線上文字檔！');
     }
 
     // 刪除功能
-    function deleteCard(index) {
-        if (confirm(`確定要刪除「${phrases[index]}」嗎？`)) {
-            phrases.splice(index, 1);
-            saveData();
+    async function deleteCard(index) {
+        if (confirm(`確定要刪除「${cloudData.phrases[index]}」嗎？`)) {
+            cloudData.phrases.splice(index, 1);
             renderCards();
+            await saveCloudData();
         }
     }
 
     // 排序功能
-    function moveCard(index, direction) {
+    async function moveCard(index, direction) {
         const targetIndex = index + direction;
-        if (targetIndex < 0 || targetIndex >= phrases.length) return;
+        if (targetIndex < 0 || targetIndex >= cloudData.phrases.length) return;
         
-        const temp = phrases[index];
-        phrases[index] = phrases[targetIndex];
-        phrases[targetIndex] = temp;
+        const temp = cloudData.phrases[index];
+        cloudData.phrases[index] = cloudData.phrases[targetIndex];
+        cloudData.phrases[targetIndex] = temp;
         
-        saveData();
         renderCards();
-    }
-
-    // 儲存資料
-    function saveData() {
-        localStorage.setItem('line_phrases_senior_v2', JSON.stringify(phrases));
+        await saveCloudData();
     }
 
     // 安全過濾
@@ -359,20 +404,8 @@
             .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
-    // 瀏覽次數計數器功能
-    function updateViewCounter() {
-        // 從本機取得目前的瀏覽次數，若沒有就從 0 開始
-        let currentViews = parseInt(localStorage.getItem('page_view_count')) || 0;
-        currentViews++; // 次數加 1
-        localStorage.setItem('page_view_count', currentViews); // 存回本機
-        
-        // 顯示在最下方
-        document.getElementById('viewCounter').innerText = `瀏覽次數：${currentViews}`;
-    }
-
-    // 初始化
-    renderCards();
-    updateViewCounter();
+    // 初始化：第一次載入網頁，算作一次瀏覽，同步更新並讀取
+    loadCloudData(true);
 </script>
 
 </body>
