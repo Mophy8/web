@@ -136,7 +136,7 @@
         }
 
         .admin-content.open {
-            max-height: 550px; /* 稍微提高以容納複製區 */
+            max-height: 400px;
             padding: 20px;
             border: 1px solid #e2e8f0;
             margin-top: 10px;
@@ -177,7 +177,6 @@
 
         .btn-green { background-color: var(--line-green); }
         .btn-orange { background-color: #f97316; margin-bottom: 10px; }
-        .btn-purple { background-color: #8b5cf6; font-size: 16px; padding: 10px; }
 
         /* 顯眼的瀏覽次數樣式 */
         .counter-view {
@@ -188,29 +187,13 @@
             margin-bottom: 15px;
             font-weight: bold;
         }
-
-        /* 複製結果提示區 */
-        .output-box {
-            display: none;
-            background: #f1f5f9;
-            padding: 10px;
-            border-radius: 6px;
-            font-family: monospace;
-            font-size: 12px;
-            color: #334155;
-            max-height: 80px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            margin-top: 5px;
-            border: 1px solid #cbd5e1;
-        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="text-grid" id="textGrid">
-        <div style="text-align:center; color:#94a3b8; padding:40px; font-size:20px;">正在讀取本機檔案...</div>
+        <div style="text-align:center; color:#94a3b8; padding:40px; font-size:20px;">正在讀取雲端問候語...</div>
     </div>
 
     <div class="footer-admin">
@@ -219,13 +202,10 @@
         <div class="admin-content" id="adminPanel">
             <div class="input-group">
                 <input type="password" id="password" placeholder="請輸入管理密碼">
-                <button class="big-btn btn-orange" id="modeBtn" onclick="verifyAndToggleMode()">進入管理模式 (刪除/排序)</button>
+                <button class="big-btn btn-orange" id="modeBtn" onclick="toggleManagementMode()">切換管理模式 (刪除/排序)</button>
                 <hr style="width:100%; border:0; border-top:1px solid #e2e8f0; margin: 5px 0;">
                 <textarea id="newText" placeholder="請輸入要新增的問候語..."></textarea>
                 <button class="big-btn btn-green" onclick="addTextBox()">確認新增方塊</button>
-                
-                <button class="big-btn btn-purple" id="copyBtn" style="display:none;" onclick="copyNewJson()">📋 複製最新文字檔內容</button>
-                <div class="output-box" id="outputBox"></div>
             </div>
         </div>
     </div>
@@ -234,36 +214,57 @@
 </div>
 
 <script>
-    // ======= 📝 同層或子資料夾文字檔的路徑 =======
-    // 如果放在子資料夾內，請改成例如 "config/data.json"
-    const DATA_FILE_URL = "config/data.json"; 
-    // ============================================
+    // ======= 📝 請在此處填入您的 Google Apps Script 部署網址 =======
+    // const GAS_API_URL = "https://script.google.com/macros/s/XXXXXX/exec"; 
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzfQc8rmLM8oV2GjeIV0co3nF05AGUemfAke4tRGVZIpvsMSfBeCqQXVpotJ0MwkuU/exec";
+    // =========================================================
 
-    const ADMIN_PASSWORD = "1234"; 
-    let localData = { phrases: [], views: 0 };
+    let cloudPhrases = [];
     let isManagementMode = false;
 
-    // 1. 讀取同層的 data.json 檔案
-    async function loadDataFile() {
+    // 1. 自動從 Google 雲端讀取資料
+    async function loadCloudData() {
         try {
-            // 後面加上時間戳記防止瀏覽器快取舊資料
-            const response = await fetch(`${DATA_FILE_URL}?t=${Date.now()}`);
-            if (!response.ok) throw new Error();
-            localData = await response.json();
+            const response = await fetch(GAS_API_URL);
+            const data = await response.json();
+            
+            cloudPhrases = data.phrases;
+            document.getElementById('viewCounter').innerText = `全域總瀏覽次數：${data.views}`;
+            renderCards();
         } catch (error) {
-            console.error("讀取 data.json 失敗，使用備用預設值");
-            localData = { views: 100, phrases: ["大家好", "大家早安", "大家午安", "新年快樂", "佳節愉快"] };
+            console.error("連線 Google 失敗：", error);
+            document.getElementById('viewCounter').innerText = `瀏覽次數讀取失敗`;
+        }
+    }
+
+    // 2. 將修改送至 Google 進行密碼比對與儲存
+    async function saveToCloud() {
+        const passwordInput = document.getElementById('password').value.trim();
+        if (!passwordInput) {
+            alert("請先在密碼欄輸入管理密碼，才能同步儲存至雲端！");
+            return false;
         }
 
-        // 計算瀏覽次數：文字檔基礎次數 + 本機這台手機開啟的次數
-        let personalOpenCount = parseInt(localStorage.getItem('my_open_count')) || 0;
-        personalOpenCount++;
-        localStorage.setItem('my_open_count', personalOpenCount);
-
-        let totalViews = (localData.views || 0) + personalOpenCount;
-        document.getElementById('viewCounter').innerText = `全域總瀏覽次數：${totalViews}`;
-        
-        renderCards();
+        try {
+            const response = await fetch(GAS_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    password: passwordInput,
+                    phrases: cloudPhrases
+                })
+            });
+            const res = await response.json();
+            if (res.status === "success") {
+                return true;
+            } else {
+                alert("儲存失敗：" + res.message); // 密碼錯誤時會從 GAS 傳回這裏
+                return false;
+            }
+        } catch (e) {
+            alert("同步連線失敗，請檢查網路！");
+            console.error(e);
+            return false;
+        }
     }
 
     // 渲染文字方塊
@@ -271,7 +272,7 @@
         const grid = document.getElementById('textGrid');
         grid.innerHTML = ''; 
 
-        localData.phrases.forEach((text, index) => {
+        cloudPhrases.forEach((text, index) => {
             if(!text) return;
             const card = document.createElement('div');
             card.className = `text-card ${isManagementMode ? '' : 'view-mode'}`;
@@ -308,7 +309,7 @@
         window.open(lineUrl, '_blank');
     }
 
-    // 管理選單展開/收合
+    // 控制管理選單展開收合
     function toggleAdminPanel() {
         const panel = document.getElementById('adminPanel');
         const btn = document.getElementById('toggleBtn');
@@ -317,9 +318,7 @@
             panel.classList.remove('open');
             btn.innerText = "⚙️ 管理與維護功能 (點擊展開)";
             isManagementMode = false;
-            document.getElementById('modeBtn').innerText = "進入管理模式 (刪除/排序)";
-            document.getElementById('copyBtn').style.display = 'none';
-            document.getElementById('outputBox').style.display = 'none';
+            document.getElementById('modeBtn').innerText = "切換管理模式 (刪除/排序)";
             renderCards();
         } else {
             panel.classList.add('open');
@@ -330,82 +329,69 @@
         }
     }
 
-    // 驗證密碼
-    function verifyAndToggleMode() {
-        const passwordInput = document.getElementById('password');
-        if (passwordInput.value !== ADMIN_PASSWORD) {
-            alert('密碼錯誤！');
-            passwordInput.value = '';
-            return;
-        }
+    // 切換管理模式（前端先切換，等按下儲存才驗證）
+    function toggleManagementMode() {
         isManagementMode = !isManagementMode;
-        document.getElementById('modeBtn').innerText = isManagementMode ? "退出管理模式 (已鎖定)" : "進入管理模式 (刪除/排序)";
-        showMaintenanceTools();
+        const modeBtn = document.getElementById('modeBtn');
+        modeBtn.innerText = isManagementMode ? "退出管理模式 (按鈕已顯現)" : "切換管理模式 (刪除/排序)";
         renderCards();
     }
 
-    // 顯示維護工具（複製按鈕）
-    function showMaintenanceTools() {
-        const passwordInput = document.getElementById('password');
-        if (passwordInput.value === ADMIN_PASSWORD) {
-            document.getElementById('copyBtn').style.display = 'block';
-            updateOutputBox();
-        }
-    }
-
-    // 新增文字方塊
-    function addTextBox() {
+    // 新增文字方塊功能
+    async function addTextBox() {
         const textInput = document.getElementById('newText');
-        const passwordInput = document.getElementById('password');
         const textValue = textInput.value.trim();
 
         if (!textValue) { alert('請輸入文字內容！'); return; }
-        if (passwordInput.value !== ADMIN_PASSWORD) { alert('請先輸入管理密碼！'); return; }
 
-        localData.phrases.push(textValue);
-        textInput.value = '';
-        renderCards();
-        updateOutputBox();
-        alert('網頁內容已更新！請點擊下方的「複製最新文字檔內容」更新您的 data.json 檔案。');
+        // 先把字加進暫存清單
+        cloudPhrases.push(textValue);
+        
+        // 嘗試推送到 Google 端儲存（此時會驗證輸入的密碼）
+        const success = await saveToCloud();
+        if (success) {
+            renderCards();
+            textInput.value = '';
+            alert('成功！內容已自動寫入並同步至 Google 雲端！');
+        } else {
+            // 失敗的話，把剛才加進去的字扣掉
+            cloudPhrases.pop();
+        }
     }
 
     // 刪除功能
-    function deleteCard(index) {
-        if (confirm(`確定要刪除「${localData.phrases[index]}」嗎？`)) {
-            localData.phrases.splice(index, 1);
-            renderCards();
-            updateOutputBox();
+    async function deleteCard(index) {
+        if (confirm(`確定要刪除「${cloudPhrases[index]}」嗎？`)) {
+            const backup = cloudPhrases.splice(index, 1)[0];
+            const success = await saveToCloud();
+            if (success) {
+                renderCards();
+            } else {
+                // 儲存失敗（如密碼錯），還原陣列
+                cloudPhrases.splice(index, 0, backup);
+            }
         }
     }
 
     // 排序功能
-    function moveCard(index, direction) {
+    async function moveCard(index, direction) {
         const targetIndex = index + direction;
-        if (targetIndex < 0 || targetIndex >= localData.phrases.length) return;
-        const temp = localData.phrases[index];
-        localData.phrases[index] = localData.phrases[targetIndex];
-        localData.phrases[targetIndex] = temp;
-        renderCards();
-        updateOutputBox();
-    }
-
-    // 更新隱藏的輸出盒內容
-    function updateOutputBox() {
-        const box = document.getElementById('outputBox');
-        box.innerText = JSON.stringify(localData, null, 2);
-    }
-
-    // 一鍵複製最新 JSON 內容
-    function copyNewJson() {
-        updateOutputBox();
-        const jsonText = document.getElementById('outputBox').innerText;
+        if (targetIndex < 0 || targetIndex >= cloudPhrases.length) return;
         
-        navigator.clipboard.writeText(jsonText).then(() => {
-            alert('📋 最新文字檔內容已複製到您的剪貼簿！\n請打開您的 data.json 檔案，把舊內容全選刪除，然後「貼上」並儲存即可！');
-        }).catch(() => {
-            document.getElementById('outputBox').style.display = 'block';
-            alert('自動複製失敗，請手動全選下方灰色框內的文字進行複製。');
-        });
+        // 交換位置
+        const temp = cloudPhrases[index];
+        cloudPhrases[index] = cloudPhrases[targetIndex];
+        cloudPhrases[targetIndex] = temp;
+        
+        const success = await saveToCloud();
+        if (success) {
+            renderCards();
+        } else {
+            // 儲存失敗，位置換回來
+            const revert = cloudPhrases[index];
+            cloudPhrases[index] = cloudPhrases[targetIndex];
+            cloudPhrases[targetIndex] = revert;
+        }
     }
 
     // 安全過濾
@@ -415,8 +401,8 @@
             .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
-    // 初始化：讀取資料
-    loadDataFile();
+    // 初始化：載入 Google 雲端資料
+    loadCloudData();
 </script>
 
 </body>
