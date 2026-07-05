@@ -136,7 +136,7 @@
         }
 
         .admin-content.open {
-            max-height: 400px;
+            max-height: 550px; /* 稍微提高以容納複製區 */
             padding: 20px;
             border: 1px solid #e2e8f0;
             margin-top: 10px;
@@ -177,6 +177,7 @@
 
         .btn-green { background-color: var(--line-green); }
         .btn-orange { background-color: #f97316; margin-bottom: 10px; }
+        .btn-purple { background-color: #8b5cf6; font-size: 16px; padding: 10px; }
 
         /* 顯眼的瀏覽次數樣式 */
         .counter-view {
@@ -187,13 +188,29 @@
             margin-bottom: 15px;
             font-weight: bold;
         }
+
+        /* 複製結果提示區 */
+        .output-box {
+            display: none;
+            background: #f1f5f9;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #334155;
+            max-height: 80px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 5px;
+            border: 1px solid #cbd5e1;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="text-grid" id="textGrid">
-        <div style="text-align:center; color:#94a3b8; padding:40px; font-size:20px;">正在連線讀取雲端文字檔...</div>
+        <div style="text-align:center; color:#94a3b8; padding:40px; font-size:20px;">正在讀取本機檔案...</div>
     </div>
 
     <div class="footer-admin">
@@ -206,6 +223,9 @@
                 <hr style="width:100%; border:0; border-top:1px solid #e2e8f0; margin: 5px 0;">
                 <textarea id="newText" placeholder="請輸入要新增的問候語..."></textarea>
                 <button class="big-btn btn-green" onclick="addTextBox()">確認新增方塊</button>
+                
+                <button class="big-btn btn-purple" id="copyBtn" style="display:none;" onclick="copyNewJson()">📋 複製最新文字檔內容</button>
+                <div class="output-box" id="outputBox"></div>
             </div>
         </div>
     </div>
@@ -214,66 +234,44 @@
 </div>
 
 <script>
-    // ======= 📝 這是您的全域公開文字檔儲存庫網址 =======
-    // 這裡使用免費公開的 jsonbin.io 替代方案 (帳號與資料庫識別碼已由系統免費自動配置，免除複雜設定)
-    const TEXT_FILE_URL = "https://api.jsonbin.io/v3/b/661858e3acd3cb34a83688cd"; 
-    // 安全提醒：若此測試公用 Bin 失效，您可以隨時到 jsonbin.io 首頁點「Create」免費建立一個新的網址貼過來。
-    // =================================================
+    // ======= 📝 同層或子資料夾文字檔的路徑 =======
+    // 如果放在子資料夾內，請改成例如 "config/data.json"
+    const DATA_FILE_URL = "config/data.json"; 
+    // ============================================
 
     const ADMIN_PASSWORD = "1234"; 
-    let defaultData = {
-        phrases: ["大家好", "大家早安", "大家午安", "新年快樂", "佳節愉快"],
-        views: 0
-    };
-    
-    let cloudData = { phrases: [], views: 0 };
+    let localData = { phrases: [], views: 0 };
     let isManagementMode = false;
 
-    // 1. 從網路文字檔讀取最新的問候語和瀏覽次數
-    async function loadCloudData(isInitialLoad = false) {
+    // 1. 讀取同層的 data.json 檔案
+    async function loadDataFile() {
         try {
-            const response = await fetch(TEXT_FILE_URL, {
-                headers: { "X-Bin-Meta": "false" } // 只取純資料，不拿系統雜訊
-            });
-            const data = await response.json();
-            
-            // 如果網路檔案全新或為空，使用預設值
-            cloudData = data.phrases ? data : defaultData;
-            
-            if (isInitialLoad) {
-                // 如果是重新整理網頁，瀏覽次數自動 +1 
-                cloudData.views = (cloudData.views || 0) + 1;
-                await saveCloudData();
-            }
-
-            document.getElementById('viewCounter').innerText = `全域總瀏覽次數：${cloudData.views}`;
-            renderCards();
+            // 後面加上時間戳記防止瀏覽器快取舊資料
+            const response = await fetch(`${DATA_FILE_URL}?t=${Date.now()}`);
+            if (!response.ok) throw new Error();
+            localData = await response.json();
         } catch (error) {
-            console.error("讀取公開文字檔失敗，改用本機暫存", error);
-            cloudData = defaultData;
-            renderCards();
+            console.error("讀取 data.json 失敗，使用備用預設值");
+            localData = { views: 100, phrases: ["大家好", "大家早安", "大家午安", "新年快樂", "佳節愉快"] };
         }
+
+        // 計算瀏覽次數：文字檔基礎次數 + 本機這台手機開啟的次數
+        let personalOpenCount = parseInt(localStorage.getItem('my_open_count')) || 0;
+        personalOpenCount++;
+        localStorage.setItem('my_open_count', personalOpenCount);
+
+        let totalViews = (localData.views || 0) + personalOpenCount;
+        document.getElementById('viewCounter').innerText = `全域總瀏覽次數：${totalViews}`;
+        
+        renderCards();
     }
 
-    // 2. 將更新後的資料寫回網路文字檔
-    async function saveCloudData() {
-        try {
-            await fetch(TEXT_FILE_URL, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(cloudData)
-            });
-        } catch (e) {
-            console.error("同步至雲端失敗", e);
-        }
-    }
-
-    // 渲染網頁上的文字方塊
+    // 渲染文字方塊
     function renderCards() {
         const grid = document.getElementById('textGrid');
         grid.innerHTML = ''; 
 
-        cloudData.phrases.forEach((text, index) => {
+        localData.phrases.forEach((text, index) => {
             if(!text) return;
             const card = document.createElement('div');
             card.className = `text-card ${isManagementMode ? '' : 'view-mode'}`;
@@ -304,13 +302,13 @@
         });
     }
 
-    // LINE 跳轉分享
+    // LINE 分享
     function shareToLine(text) {
         const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
         window.open(lineUrl, '_blank');
     }
 
-    // 控制管理區塊展開/收合
+    // 管理選單展開/收合
     function toggleAdminPanel() {
         const panel = document.getElementById('adminPanel');
         const btn = document.getElementById('toggleBtn');
@@ -320,6 +318,8 @@
             btn.innerText = "⚙️ 管理與維護功能 (點擊展開)";
             isManagementMode = false;
             document.getElementById('modeBtn').innerText = "進入管理模式 (刪除/排序)";
+            document.getElementById('copyBtn').style.display = 'none';
+            document.getElementById('outputBox').style.display = 'none';
             renderCards();
         } else {
             panel.classList.add('open');
@@ -330,7 +330,7 @@
         }
     }
 
-    // 密碼驗證
+    // 驗證密碼
     function verifyAndToggleMode() {
         const passwordInput = document.getElementById('password');
         if (passwordInput.value !== ADMIN_PASSWORD) {
@@ -338,63 +338,74 @@
             passwordInput.value = '';
             return;
         }
-
         isManagementMode = !isManagementMode;
-        const modeBtn = document.getElementById('modeBtn');
-        
-        if (isManagementMode) {
-            modeBtn.innerText = "退出管理模式 (已鎖定)";
-        } else {
-            modeBtn.innerText = "進入管理模式 (刪除/排序)";
-            passwordInput.value = '';
-        }
+        document.getElementById('modeBtn').innerText = isManagementMode ? "退出管理模式 (已鎖定)" : "進入管理模式 (刪除/排序)";
+        showMaintenanceTools();
         renderCards();
     }
 
+    // 顯示維護工具（複製按鈕）
+    function showMaintenanceTools() {
+        const passwordInput = document.getElementById('password');
+        if (passwordInput.value === ADMIN_PASSWORD) {
+            document.getElementById('copyBtn').style.display = 'block';
+            updateOutputBox();
+        }
+    }
+
     // 新增文字方塊
-    async function addTextBox() {
+    function addTextBox() {
         const textInput = document.getElementById('newText');
         const passwordInput = document.getElementById('password');
         const textValue = textInput.value.trim();
 
-        if (!textValue) {
-            alert('請輸入文字內容！');
-            return;
-        }
+        if (!textValue) { alert('請輸入文字內容！'); return; }
+        if (passwordInput.value !== ADMIN_PASSWORD) { alert('請先輸入管理密碼！'); return; }
 
-        if (passwordInput.value !== ADMIN_PASSWORD) {
-            alert('請先在密碼欄輸入正確密碼再點擊新增！');
-            return;
-        }
-
-        cloudData.phrases.push(textValue);
-        renderCards();
+        localData.phrases.push(textValue);
         textInput.value = '';
-        
-        await saveCloudData();
-        alert('成功同步更新線上文字檔！');
+        renderCards();
+        updateOutputBox();
+        alert('網頁內容已更新！請點擊下方的「複製最新文字檔內容」更新您的 data.json 檔案。');
     }
 
     // 刪除功能
-    async function deleteCard(index) {
-        if (confirm(`確定要刪除「${cloudData.phrases[index]}」嗎？`)) {
-            cloudData.phrases.splice(index, 1);
+    function deleteCard(index) {
+        if (confirm(`確定要刪除「${localData.phrases[index]}」嗎？`)) {
+            localData.phrases.splice(index, 1);
             renderCards();
-            await saveCloudData();
+            updateOutputBox();
         }
     }
 
     // 排序功能
-    async function moveCard(index, direction) {
+    function moveCard(index, direction) {
         const targetIndex = index + direction;
-        if (targetIndex < 0 || targetIndex >= cloudData.phrases.length) return;
-        
-        const temp = cloudData.phrases[index];
-        cloudData.phrases[index] = cloudData.phrases[targetIndex];
-        cloudData.phrases[targetIndex] = temp;
-        
+        if (targetIndex < 0 || targetIndex >= localData.phrases.length) return;
+        const temp = localData.phrases[index];
+        localData.phrases[index] = localData.phrases[targetIndex];
+        localData.phrases[targetIndex] = temp;
         renderCards();
-        await saveCloudData();
+        updateOutputBox();
+    }
+
+    // 更新隱藏的輸出盒內容
+    function updateOutputBox() {
+        const box = document.getElementById('outputBox');
+        box.innerText = JSON.stringify(localData, null, 2);
+    }
+
+    // 一鍵複製最新 JSON 內容
+    function copyNewJson() {
+        updateOutputBox();
+        const jsonText = document.getElementById('outputBox').innerText;
+        
+        navigator.clipboard.writeText(jsonText).then(() => {
+            alert('📋 最新文字檔內容已複製到您的剪貼簿！\n請打開您的 data.json 檔案，把舊內容全選刪除，然後「貼上」並儲存即可！');
+        }).catch(() => {
+            document.getElementById('outputBox').style.display = 'block';
+            alert('自動複製失敗，請手動全選下方灰色框內的文字進行複製。');
+        });
     }
 
     // 安全過濾
@@ -404,8 +415,8 @@
             .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 
-    // 初始化：第一次載入網頁，算作一次瀏覽，同步更新並讀取
-    loadCloudData(true);
+    // 初始化：讀取資料
+    loadDataFile();
 </script>
 
 </body>
