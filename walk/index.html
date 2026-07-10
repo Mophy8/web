@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>活力健走王 - 音效挑戰版</title>
+    <title>活力健走王 - 終極音效排行版</title>
     <style>
         body {
             font-family: 'Microsoft JhengHei', sans-serif;
@@ -23,10 +23,10 @@
             border-radius: 24px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             width: 90%;
-            max-width: 420px;
+            max-width: 440px;
         }
         h1 { color: #2e7d32; font-size: 32px; margin-bottom: 5px; }
-        .sub-title { font-size: 18px; color: #555; margin-bottom: 20px; }
+        .sub-title { font-size: 16px; color: #555; margin-bottom: 20px; }
         
         .info-panel {
             display: flex;
@@ -34,7 +34,7 @@
             background-color: #f1f8e9;
             padding: 15px;
             border-radius: 12px;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             margin-bottom: 20px;
         }
@@ -73,24 +73,44 @@
             font-size: 26px;
             font-weight: bold;
             color: white;
-            background: linear-gradient(145deg, #3498db, #2980b9);
             border: none;
             border-radius: 50%;
             cursor: pointer;
-            box-shadow: 0 8px #1f6391, 0 10px 15px rgba(0,0,0,0.1);
             transition: transform 0.05s;
         }
-        .foot-btn:active {
-            box-shadow: 0 2px #1f6391;
-            transform: translateY(6px);
+        #left-btn {
+            background: linear-gradient(145deg, #3498db, #2980b9);
+            box-shadow: 0 8px #1f6391, 0 10px 15px rgba(0,0,0,0.1);
         }
+        #left-btn:active { box-shadow: 0 2px #1f6391; transform: translateY(6px); }
+        
+        #right-btn {
+            background: linear-gradient(145deg, #e67e22, #d35400);
+            box-shadow: 0 8px #a04000, 0 10px 15px rgba(0,0,0,0.1);
+        }
+        #right-btn:active { box-shadow: 0 2px #a04000; transform: translateY(6px); }
+
         .foot-btn:disabled {
-            background: #cbd5e1;
-            box-shadow: 0 8px #94a3b8;
+            background: #cbd5e1 !important;
+            box-shadow: 0 8px #94a3b8 !important;
             color: #64748b;
             cursor: not-allowed;
-            transform: none;
+            transform: none !important;
         }
+
+        /* 排行榜樣式 */
+        .leaderboard {
+            margin-top: 25px;
+            text-align: left;
+            background: #fafafa;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+        }
+        .leaderboard h3 { margin: 0 0 10px 0; color: #2e7d32; font-size: 18px; text-align: center;}
+        .leaderboard ul { list-style: none; padding: 0; margin: 0; font-size: 16px; }
+        .leaderboard li { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #eee; }
+        .leaderboard li:last-child { border-bottom: none; }
 
         .modal {
             display: none;
@@ -111,7 +131,7 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
         .modal-content h2 { color: #2e7d32; margin-top: 0; }
-        .modal-content p { font-size: 18px; line-height: 1.6; color: #444; }
+        .modal-content p { font-size: 16px; line-height: 1.6; color: #444; }
         .modal-btn {
             background-color: #4caf50;
             color: white;
@@ -123,13 +143,22 @@
             margin-top: 15px;
             font-weight: bold;
         }
+        .name-input {
+            width: 80%;
+            padding: 10px;
+            font-size: 16px;
+            margin: 15px 0;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
 <div id="game-container">
     <h1>🚶‍♂️ 活力健走王</h1>
-    <div class="sub-title">雙腳交替點，健康多一點！</div>
+    <div class="sub-title">左右踏步聽音辨位，挑戰極限！</div>
     
     <div class="info-panel">
         <div>步數：<span id="steps" class="text-green">0</span> / 60</div>
@@ -144,94 +173,116 @@
         <button id="left-btn" class="foot-btn" onclick="takeStep('left')">左腳</button>
         <button id="right-btn" class="foot-btn" onclick="takeStep('right')" disabled>右腳</button>
     </div>
+
+    <!-- 本地排行榜 -->
+    <div class="leaderboard">
+        <h3>🏆 本地英雄榜 (最佳時間)</h3>
+        <ul id="leaderboard-list">
+            <li><span style="color:#999;">暫無紀錄，等你來挑戰！</span></li>
+        </ul>
+    </div>
 </div>
 
 <div id="health-modal" class="modal">
     <div class="modal-content">
         <h2 id="modal-title">🎉 成功達標！</h2>
-        <p id="health-tip">這裡會顯示健康小常識</p>
-        <button class="modal-btn" onclick="closeModal()">再挑戰一次</button>
+        <p id="health-tip"></p>
+        <div id="name-input-section">
+            <label for="username" style="font-weight:bold;">請輸入您的尊姓大名留下紀錄：</label>
+            <input type="text" id="username" class="name-input" placeholder="例如：王大明" maxlength="10">
+        </div>
+        <button id="action-btn" class="modal-btn" onclick="submitScore()">提交紀錄並再試一次</button>
     </div>
 </div>
 
 <script>
+    // 🔴 請在這裡貼上您部署好的 Google Apps Script Web App URL
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyQy3DDpHM6Ps3tW33S1P89bt6SXKstcidPFk9byuomnS7uHCZZcvUtva_xTGClocE/exec";
+
     let steps = 0;
-    const targetSteps = 60; // 提高到 60 步
-    let timeLeft = 20;     // 縮短到 20 秒
+    const targetSteps = 60; 
+    let timeLeft = 20;     
     let nextFoot = 'left';
     let timerInterval = null;
     let gameActive = true;
+    let startTime = 0;
+    let timeUsed = 0;
 
-    // 初始化 Web Audio API 音效系統
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     let audioCtx = null;
 
     function initAudio() {
-        if (!audioCtx) {
-            audioCtx = new AudioCtx();
-        }
+        if (!audioCtx) audioCtx = new AudioCtx();
     }
 
-    // 播放腳步聲（低沉穩重的木頭踏步聲）
-    function playStepSound() {
+    // 播放腳步聲（傳入不同的頻率以區分左右腳）
+    function playStepSound(isLeft) {
         initAudio();
         let osc = audioCtx.createOscillator();
         let gain = audioCtx.createGain();
         
-        osc.type = 'triangle'; 
-        osc.frequency.setValueAtTime(120, audioCtx.currentTime); // 低音
-        osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.08);
+        osc.type = 'triangle';
+        // 左腳低音沉穩(100Hz)，右腳稍高音明快(150Hz)
+        let baseFreq = isLeft ? 100 : 160;
+        osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.1);
         
-        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+        // 分離左右聲道 (左腳偏左、右腳偏右)，增加聽覺層次
+        if (audioCtx.createStereoPanner) {
+            let panner = audioCtx.createStereoPanner();
+            panner.pan.setValueAtTime(isLeft ? -0.5 : 0.5, audioCtx.currentTime);
+            osc.connect(panner);
+            panner.connect(gain);
+        } else {
+            osc.connect(gain);
+        }
         
-        osc.connect(gain);
+        gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        
         gain.connect(audioCtx.destination);
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.08);
+        osc.stop(audioCtx.currentTime + 0.1);
     }
 
-    // 播放成功音效（輕快的和弦）
     function playWinSound() {
         initAudio();
         const now = audioCtx.currentTime;
-        const freqs = [261.6, 329.6, 392.0, 523.3]; // Do, Mi, Sol, Do
+        const freqs = [261.6, 329.6, 392.0, 523.3]; 
         freqs.forEach((f, i) => {
             let osc = audioCtx.createOscillator();
             let gain = audioCtx.createGain();
             osc.type = 'sine';
             osc.frequency.value = f;
-            gain.gain.setValueAtTime(0.3, now + i * 0.1);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.4);
+            gain.gain.setValueAtTime(0.3, now + i * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.08 + 0.3);
             osc.connect(gain);
             gain.connect(audioCtx.destination);
-            osc.start(now + i * 0.1);
-            osc.stop(now + i * 0.1 + 0.4);
+            osc.start(now + i * 0.08);
+            osc.stop(now + i * 0.08 + 0.3);
         });
     }
 
-    // 播放失敗音效（下沉的嗶聲）
     function playLoseSound() {
         initAudio();
         let osc = audioCtx.createOscillator();
         let gain = audioCtx.createGain();
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-        osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.5);
+        osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.4);
         gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.5);
+        osc.stop(audioCtx.currentTime + 0.4);
     }
 
     const healthTips = [
         "飯後散步30分鐘，有助於促進消化、穩定血糖喔！",
         "健走時記得挺胸縮腹，擺動雙臂，運動效果會加倍！",
         "多喝水能促進新陳代謝，今天你喝足2000毫升的水了嗎？",
-        "每週健走150分鐘，能有效增強心肺功能，維持血管健康！",
-        "出門健走記得穿著包覆性好的運動鞋，保護膝蓋與腳踝。"
+        "每週健走150分鐘，能有效增強心肺功能，維持健康！"
     ];
 
     const stepsDisplay = document.getElementById('steps');
@@ -242,8 +293,32 @@
     const modal = document.getElementById('health-modal');
     const healthTip = document.getElementById('health-tip');
     const modalTitle = document.getElementById('modal-title');
+    const usernameInput = document.getElementById('username');
+    const nameInputSection = document.getElementById('name-input-section');
+    const actionBtn = document.getElementById('action-btn');
+
+    // 載入本地排行榜
+    function updateLeaderboardView() {
+        const listEl = document.getElementById('leaderboard-list');
+        let records = JSON.parse(localStorage.getItem('walk_records')) || [];
+        records.sort((a, b) => a.time - b.time);
+        records = records.slice(0, 5); // 取前五名
+
+        if (records.length === 0) {
+            listEl.innerHTML = `<li><span style="color:#999;">暫無紀錄，等你來挑戰！</span></li>`;
+            return;
+        }
+
+        listEl.innerHTML = records.map((r, i) => `
+            <li>
+                <span>${i+1}. 👑 ${r.name}</span>
+                <span class="text-green">花費 ${r.time} 秒</span>
+            </li>
+        `).join('');
+    }
 
     function startTimer() {
+        startTime = Date.now();
         timerInterval = setInterval(() => {
             if (!gameActive) return;
             timeLeft--;
@@ -267,8 +342,7 @@
             steps++;
             stepsDisplay.innerText = steps;
             
-            // 播放腳步聲
-            playStepSound();
+            playStepSound(foot === 'left');
 
             let progress = (steps / targetSteps) * 100;
             avatar.style.width = Math.min(progress, 100) + '%';
@@ -285,6 +359,7 @@
 
             if (steps >= targetSteps) {
                 clearInterval(timerInterval);
+                timeUsed = ((Date.now() - startTime) / 1000).toFixed(2);
                 gameOver(true);
             }
         }
@@ -297,16 +372,43 @@
 
         if (isWin) {
             playWinSound();
-            modalTitle.innerText = "🎉 成功達標！體能真棒！";
+            modalTitle.innerText = `🎉 成功達標！花費 ${timeUsed} 秒`;
             const randomTip = healthTips[Math.floor(Math.random() * healthTips.length)];
             healthTip.innerText = randomTip;
+            nameInputSection.style.display = 'block';
+            actionBtn.innerText = "提交紀錄並再試一次";
         } else {
             playLoseSound();
             modalTitle.innerText = "⏰ 哎呀，時間到了！";
-            healthTip.innerText = "沒關係，留得青山在，不怕沒柴燒。深呼吸一下，我們再試一次！";
+            healthTip.innerText = "沒關係，深呼吸一下，我們再試一次！";
+            nameInputSection.style.display = 'none';
+            actionBtn.innerText = "再挑戰一次";
         }
         
         modal.style.display = 'flex';
+    }
+
+    function submitScore() {
+        if (steps >= targetSteps) {
+            let name = usernameInput.value.trim() || "無名大師";
+            
+            // 1. 存入 LocalStorage
+            let records = JSON.parse(localStorage.getItem('walk_records')) || [];
+            records.push({ name: name, time: parseFloat(timeUsed) });
+            localStorage.setItem('walk_records', JSON.stringify(records));
+            updateLeaderboardView();
+
+            // 2. 非同步發送給 Google Apps Script (GAS) 收集 IP 及紀錄
+            if (GAS_URL && !GAS_URL.includes("XXXXX")) {
+                fetch(GAS_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name, timeUsed: timeUsed, steps: steps })
+                }).catch(e => console.log("GAS 發送失敗，請確認部署設定。"));
+            }
+        }
+        closeModal();
     }
 
     function closeModal() {
@@ -316,6 +418,7 @@
         nextFoot = 'left';
         timerInterval = null;
         gameActive = true;
+        usernameInput.value = '';
 
         stepsDisplay.innerText = steps;
         timerDisplay.innerText = timeLeft;
@@ -324,6 +427,9 @@
         leftBtn.disabled = false;
         rightBtn.disabled = true;
     }
+
+    // 初始載入排行榜
+    updateLeaderboardView();
 </script>
 </body>
 </html>
