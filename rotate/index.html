@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D 旋轉鋼彈視錯覺 - 阿郎陪你運動趣</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #000;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #fff;
+            font-family: sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #info {
+            position: absolute;
+            top: 20px;
+            text-align: center;
+            pointer-events: auto; /* 允許點擊標題連結 */
+            z-index: 10;
+        }
+        h1 { 
+            margin: 0 0 10px 0; 
+            font-size: 28px; 
+            letter-spacing: 2px; 
+        }
+        h1 a {
+            color: #fff;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        h1 a:hover {
+            color: #ff3333; /* 滑鼠懸停時變成鋼彈紅，增加互動感 */
+        }
+        p { margin: 0; color: #888; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div id="info">
+        <!-- 修改後的主標題與超連結 -->
+        <h1><a href="https://www.youtube.com/@AlanWorkoutFun" target="_blank">阿郎陪你運動趣</a></h1>
+        <p>鋼彈機器人旋轉視錯覺。你能用大腦意念自由切換旋轉方向嗎？</p>
+    </div>
+
+    <canvas id="illusionCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('illusionCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        const points = [];
+        let angle = 0;
+        const speed = 0.03; // 保持慢速旋轉
+
+        // 生成鋼彈機器人的 3D 點陣模型
+        function createGundamModel() {
+            // === 頭部 & 經典 V 字天線 ===
+            generateBox(0, -100, 0, 30, 30, 30, '#ffffff', 400); 
+            generateBox(0, -85, 20, 15, 10, 10, '#ffffff', 100); 
+            generateBox(-10, -100, 16, 8, 4, 2, '#ecec21', 40);  
+            generateBox(10, -100, 16, 8, 4, 2, '#ecec21', 40);   
+            generateLine({x:0, y:-115, z:15}, {x:-45, y:-140, z:20}, '#ecec21', 80); 
+            generateLine({x:0, y:-115, z:15}, {x:45, y:-140, z:20}, '#ecec21', 80);  
+            generateBox(0, -115, 18, 8, 10, 6, '#e63333', 40);   
+
+            // === 軀幹 (胸腹部) ===
+            generateBox(0, -50, 0, 50, 30, 35, '#3355cc', 500);  
+            generateBox(0, -50, 18, 15, 12, 5, '#e63333', 60);   
+            generateBox(0, -15, 0, 40, 20, 30, '#ffffff', 300);  
+            generateBox(0, 10, 0, 46, 15, 36, '#ffffff', 300);   
+            generateBox(0, 10, 18, 10, 10, 4, '#e63333', 30);    
+
+            // === 雙肩 & 雙臂 ===
+            generateBox(-45, -55, 0, 24, 24, 26, '#3355cc', 250); 
+            generateBox(45, -55, 0, 24, 24, 26, '#3355cc', 250);  
+            generateBox(-45, -20, 0, 16, 30, 16, '#ffffff', 200); 
+            generateBox(45, -20, 0, 16, 30, 16, '#ffffff', 200);  
+            generateBox(-45, 15, 0, 18, 30, 18, '#ffffff', 200);  
+            generateBox(45, 15, 0, 18, 30, 18, '#ffffff', 200);   
+
+            // === 雙腿 ===
+            generateBox(-22, 45, 0, 20, 40, 22, '#ffffff', 350);  
+            generateBox(22, 45, 0, 20, 40, 22, '#ffffff', 350);   
+            generateBox(-22, 95, 0, 22, 50, 24, '#ffffff', 450);  
+            generateBox(22, 95, 0, 22, 50, 24, '#ffffff', 450);   
+            generateBox(-22, 130, 5, 24, 12, 32, '#e63333', 150); 
+            generateBox(22, 130, 5, 24, 12, 32, '#e63333', 150);  
+        }
+
+        function generateBox(cx, cy, cz, w, h, d, color, count) {
+            for (let i = 0; i < count; i++) {
+                const x = cx + (Math.random() - 0.5) * w;
+                const y = cy + (Math.random() - 0.5) * h;
+                const z = cz + (Math.random() - 0.5) * d;
+                points.push({ x, y, z, color });
+            }
+        }
+
+        function generateLine(p1, p2, color, count) {
+            for (let i = 0; i < count; i++) {
+                const t = i / count;
+                const x = p1.x + (p2.x - p1.x) * t;
+                const y = p1.y + (p2.y - p1.y) * t;
+                const z = p1.z + (p2.z - p1.z) * t;
+                points.push({ x, y, z, color });
+            }
+        }
+
+        createGundamModel();
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            angle += speed;
+            const cosA = Math.cos(angle);
+            const sinA = Math.sin(angle);
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2 + 40; 
+
+            for (let i = 0; i < points.length; i++) {
+                const p = points[i];
+                const rotX = p.x * cosA - p.z * sinA;
+                const rotY = p.y; 
+
+                const screenX = centerX + rotX;
+                const screenY = centerY + rotY;
+
+                ctx.fillStyle = p.color;
+                ctx.fillRect(screenX, screenY, 1.5, 1.5);
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
