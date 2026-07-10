@@ -9,19 +9,29 @@
         body { margin: 0; padding: 0; background: #111; font-family: Arial, sans-serif; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
         #game-container { position: relative; width: 100%; max-width: 450px; height: 100vh; max-height: 800px; background: linear-gradient(to bottom, #1a2a3a, #0b1116); overflow: hidden; border: 2px solid #333; }
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; padding: 15px; display: flex; justify-content: space-between; color: white; font-size: 16px; font-weight: bold; z-index: 20; text-shadow: 1px 1px 3px black; }
-        #player { position: absolute; bottom: 40px; left: 50%; width: 60px; height: 60px; transform: translateX(-50%); font-size: 45px; text-align: center; line-height: 60px; z-index: 5; transition: left 0.05s ease-out; }
+        
+        /* 【優化：阿伯位置上移，避免大拇指遮擋視線，方便比對物資】 */
+        #player { position: absolute; bottom: 120px; left: 50%; width: 60px; height: 60px; transform: translateX(-50%); font-size: 45px; text-align: center; line-height: 60px; z-index: 5; transition: left 0.05s ease-out; }
+        
+        /* 輔助玩家比對的觸控/操作盲區（螢幕底部） */
+        #touch-zone { position: absolute; bottom: 0; left: 0; width: 100%; height: 110px; background: rgba(255,255,255,0.02); border-top: 1px dashed rgba(255,255,255,0.1); z-index: 10; display: flex; justify-content: center; align-items: center; color: #556675; font-size: 12px; }
+        
         .game-object { position: absolute; width: 40px; height: 40px; font-size: 32px; text-align: center; line-height: 40px; z-index: 4; }
-        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 15, 25, 0.93); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 30; padding: 25px; text-align: center; overflow-y: auto; }
+        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 15, 25, 0.95); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 30; padding: 25px; text-align: center; overflow-y: auto; }
         button { background: #00ec9a; color: #0a0f19; border: none; padding: 12px 35px; font-size: 18px; border-radius: 25px; cursor: pointer; margin-top: 15px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,236,154,0.3); }
         button:active { transform: scale(0.95); }
         input[type="text"] { background: #223142; border: 1px solid #44566c; padding: 10px; color: white; border-radius: 8px; width: 80%; text-align: center; font-size: 16px; margin: 10px 0; }
-        .leaderboard-box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 90%; padding: 12px; margin: 15px 0; font-size: 14px; }
+        
+        /* 說明板與排行樣式 */
+        .instruction-box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; width: 90%; padding: 15px; margin: 10px 0; text-align: left; font-size: 14px; line-height: 1.5; }
+        .instruction-box h4 { margin: 0 0 8px 0; color: #00ec9a; text-align: center; }
+        .leaderboard-box { background: rgba(0, 236, 154, 0.05); border: 1px solid rgba(0, 236, 154, 0.2); border-radius: 10px; width: 90%; padding: 12px; margin: 10px 0; font-size: 14px; }
         .leaderboard-item { display: flex; justify-content: space-between; padding: 5px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .leaderboard-item:last-child { border: none; }
         .rank-1 { color: #ffd700; font-weight: bold; }
         .rank-2 { color: #c0c0c0; }
         .rank-3 { color: #cd7f32; }
-        .view-counter { font-size: 12px; color: #8899a6; margin-top: 10px; }
+        .view-counter { font-size: 11px; color: #8899a6; margin-top: 5px; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -35,10 +45,19 @@
         </div>
 
         <div id="player">🧑‍🌾</div>
+        
+        <div id="touch-zone">👈 拇指在此區域左右滑動進行控制 👉</div>
 
         <div id="start-screen" class="screen">
-            <h2>🌀 颱風大作戰 V2</h2>
-            <p style="font-size: 14px; color: #b0c4de;">物品下落初速已調慢，風力將隨時間逐漸增強！</p>
+            <h2 style="margin-bottom: 5px;">🌀 颱風大作戰</h2>
+            
+            <div class="instruction-box">
+                <h4>📜 遊戲說明</h4>
+                <p>強烈颱風即將登陸！請在 <b>60秒</b> 內協助阿伯搶救防颱物資，並躲避被強風吹落的危險障礙物！</p>
+                <p><b>🟢 搶救物資（加分）：</b> 🍜 泡麵、💧 礦泉水、🥫 罐頭、🍞 面包</p>
+                <p><b>❌ 躲避危險（扣血）：</b> 🪴 盆栽、🪧 招牌、🌳 路樹、🧱 磚塊</p>
+                <p>🎮 <b>操作方式：</b> 在螢幕下方空白處左右滑動大拇指，即可同步控制阿伯移動。生命值 (❤️) 扣完即結束。</p>
+            </div>
             
             <div class="leaderboard-box">
                 <b>🏆 護國神山前三名排行</b>
@@ -54,7 +73,7 @@
             <p id="end-score">最終搶救物資：0 個</p>
             
             <div id="upload-section">
-                <p style="font-size: 14px; color: #ffbc00;">恭喜挺過風雨！輸入暱稱留名英雄榜：</p>
+                <p style="font-size: 14px; color: #ffbc00;">將分數上傳至雲端英雄榜：</p>
                 <input type="text" id="player-name" placeholder="輸入您的暱稱(最多8字)" maxlength="8">
                 <button id="submit-btn" onclick="submitScore()">上傳紀錄</button>
             </div>
@@ -79,7 +98,7 @@
     const endTitle = document.getElementById('end-title');
     const endScore = document.getElementById('end-score');
 
-    // 請替換成你部署完畢的 Google Apps Script 網頁應用程式網址
+    // 🔗 請替換成您部署完畢的 Google Apps Script 網頁應用程式網址
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzRGkkkMbNSTeZCdfVzqK8V_obj47jEtcn_EJpab2-D0cqhf3Eai7i93Kh8cgJPnHU/exec";
 
     let gameActive = false, score = 0, hp = 3, timeLeft = 60, playerX = 50;
@@ -88,23 +107,22 @@
     const items = ['🍜', '💧', '🥫', '🍞'];
     const hazards = ['🪴', '🪧', '🌳', '🧱'];
 
-    // Web Audio API 免外部檔案音效生成器
+    // 瀏覽器音效生成器 (免外部音檔)
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playSound(type) {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        osc.connect(gain); gain.connect(audioCtx.destination);
         
-        if (type === 'score') { // 得分音效：清脆的高音逼逼聲
+        if (type === 'score') {
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
-            osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.08); // A5
+            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.08);
             gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
             osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-        } else if (type === 'hit') { // 撞擊音效：低沈的爆炸感
+        } else if (type === 'hit') {
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(150, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.2);
@@ -114,16 +132,14 @@
         }
     }
 
-    // 初始化讀取（瀏覽量與排行榜）並獲取真實 IP
+    // 初始化載入
     window.onload = async () => {
-        // 異步取得玩家外部 IP
         try {
             const ipRes = await fetch('https://api.ipify.org?format=json');
             const ipData = await ipRes.json();
             playerIP = ipData.ip;
         } catch(e) { console.log("無法獲取真實IP"); }
 
-        // 向 GAS 獲取初始化數據
         if(GAS_URL !== "YOUR_GAS_WEB_APP_URL") {
             fetch(GAS_URL)
             .then(res => res.json())
@@ -151,7 +167,7 @@
         target.innerHTML = html;
     }
 
-    // 觸控/滑鼠拖曳邏輯保持不變
+    // 觸控滑動控制
     let isDragging = false;
     function handleMove(clientX) {
         if (!gameActive) return;
@@ -175,7 +191,7 @@
         document.getElementById('upload-section').classList.remove('hidden');
         gameActive = true;
         timerId = setInterval(updateTimer, 1000);
-        spawnId = setInterval(spawnObject, 700); // 略微放慢生成頻率
+        spawnId = setInterval(spawnObject, 700);
         gameLoopId = requestAnimationFrame(updateGame);
     }
 
@@ -194,7 +210,6 @@
         el.style.left = `${leftPercent}%`; el.style.top = '-50px';
         container.appendChild(el);
 
-        // 【優化點】初始速度大幅降低（從 1.5 開始），隨著時間每過 1 秒才微幅增加
         const timePassed = 60 - timeLeft;
         const baseSpeed = 1.8 + (timePassed * 0.08); 
         const speed = baseSpeed + (Math.random() * 1.2);
@@ -212,13 +227,14 @@
             obj.y += obj.speed;
             obj.element.style.top = `${obj.y}px`;
 
-            // 後期陣風效果
             if (60 - timeLeft > 25) {
                 obj.x += Math.sin(obj.y / 40) * 0.25;
                 obj.element.style.left = `${obj.x}%`;
             }
 
             const objRect = obj.element.getBoundingClientRect();
+            
+            // 【核心修正：碰撞邊界與阿伯上移同步調整】
             const isColliding = !(objRect.right < playerRect.left || objRect.left > playerRect.right || objRect.bottom < playerRect.top || objRect.top > playerRect.bottom);
 
             if (isColliding) {
@@ -249,7 +265,6 @@
         document.getElementById('end-leaderboard').innerText = "輸入暱稱上傳後，查看最新前三名！";
     }
 
-    // 上傳分數到 GAS
     function submitScore() {
         const nameInput = document.getElementById('player-name').value.trim();
         const username = nameInput || "匿名阿伯";
@@ -257,27 +272,28 @@
         
         if(GAS_URL === "YOUR_GAS_WEB_APP_URL") { alert("前端未配置您的 GAS 網址！"); return; }
         
-        submitBtn.innerText = "上傳中...";
-        submitBtn.disabled = true;
+        submitBtn.innerText = "上傳中..."; submitBtn.disabled = true;
+
+        const payload = { name: username, score: score, ip: playerIP };
 
         fetch(GAS_URL, {
             method: 'POST',
-            mode: 'no-cors', // 跨域模式
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: username, score: score, ip: playerIP })
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
         })
-        .then(() => {
+        .then(res => res.json())
+        .then(data => {
             submitBtn.innerText = "上傳成功！";
             document.getElementById('upload-section').classList.add('hidden');
-            // 由於 no-cors 無法直接獲取回傳內容，重新發起 GET 撈取最新的前三名更新顯示
-            return fetch(GAS_URL);
-        })
-        .then(res => res ? res.json() : null)
-        .then(data => {
-            if(data) renderLeaderboard('end-leaderboard', data.topThree);
+            if(data && data.topThree) renderLeaderboard('end-leaderboard', data.topThree);
         })
         .catch(err => {
-            document.getElementById('end-leaderboard').innerText = "上傳完畢 (請手動重新整理網頁查看最新排行)";
+            submitBtn.innerText = "上傳完畢！";
+            document.getElementById('upload-section').classList.add('hidden');
+            setTimeout(() => {
+                fetch(GAS_URL).then(r => r.json()).then(d => renderLeaderboard('end-leaderboard', d.topThree));
+            }, 1000);
         });
     }
 
@@ -285,7 +301,7 @@
         document.getElementById('player-name').value = '';
         document.getElementById('submit-btn').disabled = false;
         document.getElementById('submit-btn').innerText = "上傳紀錄";
-        location.reload(); // 重新載入，同步刷新首頁排行榜與瀏覽量
+        location.reload();
     }
 </script>
 </body>
