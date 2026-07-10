@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>活力健走王 - 升級版</title>
+    <title>活力健走王 - 音效挑戰版</title>
     <style>
         body {
             font-family: 'Microsoft JhengHei', sans-serif;
@@ -28,7 +28,6 @@
         h1 { color: #2e7d32; font-size: 32px; margin-bottom: 5px; }
         .sub-title { font-size: 18px; color: #555; margin-bottom: 20px; }
         
-        /* 資訊看板 */
         .info-panel {
             display: flex;
             justify-content: space-between;
@@ -42,7 +41,6 @@
         .text-green { color: #388e3c; }
         .text-red { color: #d32f2f; }
         
-        /* 進度條 */
         #track {
             width: 100%;
             height: 35px;
@@ -56,7 +54,7 @@
             width: 0%;
             height: 100%;
             background: linear-gradient(90deg, #81c784, #4caf50);
-            transition: width 0.1s ease;
+            transition: width 0.05s ease;
             text-align: right;
             line-height: 35px;
             font-size: 22px;
@@ -64,7 +62,6 @@
             box-sizing: border-box;
         }
 
-        /* 腳步按鈕區 */
         .btn-container {
             display: flex;
             justify-content: space-around;
@@ -95,7 +92,6 @@
             transform: none;
         }
 
-        /* 彈出視窗樣式（健康字卡） */
         .modal {
             display: none;
             position: fixed;
@@ -135,47 +131,106 @@
     <h1>🚶‍♂️ 活力健走王</h1>
     <div class="sub-title">雙腳交替點，健康多一點！</div>
     
-    <!-- 資訊面板 -->
     <div class="info-panel">
-        <div>步數：<span id="steps" class="text-green">0</span> / 40</div>
-        <div>倒數：<span id="timer" class="text-red">30</span> 秒</div>
+        <div>步數：<span id="steps" class="text-green">0</span> / 60</div>
+        <div>倒數：<span id="timer" class="text-red">20</span> 秒</div>
     </div>
     
-    <!-- 健走進度條 -->
     <div id="track">
         <div id="avatar">🏃‍♂️</div>
     </div>
 
-    <!-- 左右腳按鈕 -->
     <div class="btn-container">
         <button id="left-btn" class="foot-btn" onclick="takeStep('left')">左腳</button>
         <button id="right-btn" class="foot-btn" onclick="takeStep('right')" disabled>右腳</button>
     </div>
 </div>
 
-<!-- 健康字卡彈出視窗 -->
 <div id="health-modal" class="modal">
     <div class="modal-content">
         <h2 id="modal-title">🎉 成功達標！</h2>
         <p id="health-tip">這裡會顯示健康小常識</p>
-        <button class="modal-btn" onclick="closeModal()">再走一回</button>
+        <button class="modal-btn" onclick="closeModal()">再挑戰一次</button>
     </div>
 </div>
 
 <script>
     let steps = 0;
-    const targetSteps = 40; // 目標步數
-    let timeLeft = 30;     // 限時 30 秒
+    const targetSteps = 60; // 提高到 60 步
+    let timeLeft = 20;     // 縮短到 20 秒
     let nextFoot = 'left';
     let timerInterval = null;
     let gameActive = true;
 
-    // 養生健康小常識資料庫
+    // 初始化 Web Audio API 音效系統
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new AudioCtx();
+        }
+    }
+
+    // 播放腳步聲（低沉穩重的木頭踏步聲）
+    function playStepSound() {
+        initAudio();
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        
+        osc.type = 'triangle'; 
+        osc.frequency.setValueAtTime(120, audioCtx.currentTime); // 低音
+        osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.08);
+        
+        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.08);
+    }
+
+    // 播放成功音效（輕快的和弦）
+    function playWinSound() {
+        initAudio();
+        const now = audioCtx.currentTime;
+        const freqs = [261.6, 329.6, 392.0, 523.3]; // Do, Mi, Sol, Do
+        freqs.forEach((f, i) => {
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = f;
+            gain.gain.setValueAtTime(0.3, now + i * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + i * 0.1);
+            osc.stop(now + i * 0.1 + 0.4);
+        });
+    }
+
+    // 播放失敗音效（下沉的嗶聲）
+    function playLoseSound() {
+        initAudio();
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+        osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.5);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+    }
+
     const healthTips = [
         "飯後散步30分鐘，有助於促進消化、穩定血糖喔！",
         "健走時記得挺胸縮腹，擺動雙臂，運動效果會加倍！",
         "多喝水能促進新陳代謝，今天你喝足2000毫升的水了嗎？",
-        "每週健走150分鐘，能有效增強心肺功能，維持微血管健康！",
+        "每週健走150分鐘，能有效增強心肺功能，維持血管健康！",
         "出門健走記得穿著包覆性好的運動鞋，保護膝蓋與腳踝。"
     ];
 
@@ -188,26 +243,22 @@
     const healthTip = document.getElementById('health-tip');
     const modalTitle = document.getElementById('modal-title');
 
-    // 啟動倒數計時器
     function startTimer() {
         timerInterval = setInterval(() => {
             if (!gameActive) return;
-            
             timeLeft--;
             timerDisplay.innerText = timeLeft;
 
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
-                gameOver(false); // 時間到，挑戰失敗
+                gameOver(false);
             }
         }, 1000);
     }
 
-    // 處理點擊步伐
     function takeStep(foot) {
         if (!gameActive) return;
 
-        // 第一次點擊時啟動計時器
         if (steps === 0 && !timerInterval) {
             startTimer();
         }
@@ -215,12 +266,13 @@
         if (foot === nextFoot) {
             steps++;
             stepsDisplay.innerText = steps;
+            
+            // 播放腳步聲
+            playStepSound();
 
-            // 更新前進度
             let progress = (steps / targetSteps) * 100;
             avatar.style.width = Math.min(progress, 100) + '%';
 
-            // 交替按鈕狀態
             if (foot === 'left') {
                 nextFoot = 'right';
                 leftBtn.disabled = true;
@@ -231,39 +283,36 @@
                 rightBtn.disabled = true;
             }
 
-            // 檢查是否達標
             if (steps >= targetSteps) {
                 clearInterval(timerInterval);
-                gameOver(true); // 挑戰成功
+                gameOver(true);
             }
         }
     }
 
-    // 遊戲結束（成功或失敗）
     function gameOver(isWin) {
         gameActive = false;
         leftBtn.disabled = true;
         rightBtn.disabled = true;
 
         if (isWin) {
-            modalTitle.innerText = "🎉 恭喜完成今日健走！";
-            // 隨機抽一則健康小常識
+            playWinSound();
+            modalTitle.innerText = "🎉 成功達標！體能真棒！";
             const randomTip = healthTips[Math.floor(Math.random() * healthTips.length)];
             healthTip.innerText = randomTip;
         } else {
+            playLoseSound();
             modalTitle.innerText = "⏰ 哎呀，時間到了！";
             healthTip.innerText = "沒關係，留得青山在，不怕沒柴燒。深呼吸一下，我們再試一次！";
         }
         
-        // 顯示彈出視窗
         modal.style.display = 'flex';
     }
 
-    // 重設遊戲
     function closeModal() {
         modal.style.display = 'none';
         steps = 0;
-        timeLeft = 30;
+        timeLeft = 20;
         nextFoot = 'left';
         timerInterval = null;
         gameActive = true;
