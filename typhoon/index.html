@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>颱風大作戰：搶救物資！</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #111;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        /* 模擬手機直式螢幕比例 (9:16) */
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            height: 100vh;
+            max-height: 800px;
+            background: linear-gradient(to bottom, #2c3e50, #0f171e);
+            overflow: hidden;
+            border: 2px solid #333;
+        }
+        /* 暴風雨天氣特效濾鏡 */
+        #weather-overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 50, 0.2);
+            pointer-events: none;
+            z-index: 10;
+        }
+        /* UI 資訊列 */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            z-index: 20;
+            text-shadow: 1px 1px 3px black;
+        }
+        /* 玩家角色 */
+        #player {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            transform: translateX(-50%);
+            font-size: 45px;
+            text-align: center;
+            line-height: 60px;
+            cursor: pointer;
+            z-index: 5;
+            transition: left 0.05s ease-out;
+        }
+        /* 掉落物與物資的通用樣式 */
+        .game-object {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            font-size: 32px;
+            text-align: center;
+            line-height: 40px;
+            z-index: 4;
+        }
+        /* 結算與開始畫面 */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 30;
+            padding: 20px;
+            text-align: center;
+        }
+        button {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        button:active {
+            background: #ff6b81;
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="weather-overlay"></div>
+        
+        <div id="ui-layer">
+            <div id="ui-score">📦 物資: 0</div>
+            <div id="ui-timer">⏱️ 倒數: 60s</div>
+            <div id="ui-hp">❤️ ❤️ ❤️</div>
+        </div>
+
+        <div id="player">🧑‍🌾</div>
+
+        <div id="start-screen" class="screen">
+            <h2>🌀 颱風大作戰：搶救物資！</h2>
+            <p>颱風即將登陸！左右滑動螢幕控制阿伯：<br>
+               🍎 收集物資（泡麵、水、罐頭）加分<br>
+               ❌ 躲避危險（盆栽、招牌、路樹）</p>
+            <button onclick="startGame()">開始防災</button>
+        </div>
+
+        <div id="gameover-screen" class="screen hidden">
+            <h2 id="end-title">遊戲結束</h2>
+            <p id="end-score">最終搶救物資：0 個</p>
+            <button onclick="startGame()">再試一次</button>
+        </div>
+    </div>
+
+<script>
+    const container = document.getElementById('game-container');
+    const player = document.getElementById('player');
+    const uiScore = document.getElementById('ui-score');
+    const uiTimer = document.getElementById('ui-timer');
+    const uiHp = document.getElementById('ui-hp');
+    const startScreen = document.getElementById('start-screen');
+    const gameoverScreen = document.getElementById('gameover-screen');
+    const endTitle = document.getElementById('end-title');
+    const endScore = document.getElementById('end-score');
+
+    // 遊戲狀態變數
+    let gameActive = false;
+    let score = 0;
+    let hp = 3;
+    let timeLeft = 60;
+    let playerX = 50; // 玩家位置百分比 (0 - 100)
+    let gameLoopId, timerId, spawnId;
+    let gameObjects = [];
+
+    // 東西的種類 (Emoji 代替圖片)
+    const items = ['🍜', '💧', '🥫', '🍞']; // 加分物資
+    const hazards = ['🪴', '🪧', '🌳', '🧱']; // 扣血障礙物
+
+    // 手機觸控/滑鼠拖曳邏輯
+    let isDragging = false;
+    
+    function handleMove(clientX) {
+        if (!gameActive) return;
+        const rect = container.getBoundingClientRect();
+        let x = ((clientX - rect.left) / rect.width) * 100;
+        if (x < 5) x = 5;
+        if (x > 95) x = 95;
+        playerX = x;
+        player.style.left = `${playerX}%`;
+    }
+
+    // 滑鼠事件
+    container.addEventListener('mousedown', () => isDragging = true);
+    window.addEventListener('mouseup', () => isDragging = false);
+    container.addEventListener('mousemove', (e) => { if(isDragging) handleMove(e.clientX); });
+
+    // 手機觸控事件
+    container.addEventListener('touchstart', (e) => { isDragging = true; handleMove(e.touches[0].clientX); });
+    container.addEventListener('touchend', () => isDragging = false);
+    container.addEventListener('touchmove', (e) => { handleMove(e.touches[0].clientX); }, {passive: true});
+
+    // 開始遊戲
+    function startGame() {
+        // 初始化數據
+        score = 0;
+        hp = 3;
+        timeLeft = 60;
+        playerX = 50;
+        player.style.left = '50%';
+        gameObjects.forEach(obj => obj.element.remove());
+        gameObjects = [];
+        
+        uiScore.innerText = `📦 物資: ${score}`;
+        uiTimer.innerText = `⏱️ 倒數: ${timeLeft}s`;
+        uiHp.innerText = '❤️ ❤️ ❤️';
+
+        startScreen.classList.add('hidden');
+        gameoverScreen.classList.add('hidden');
+        gameActive = true;
+
+        // 啟動計時器與迴圈
+        timerId = setInterval(updateTimer, 1000);
+        spawnId = setInterval(spawnObject, 600); // 每0.6秒掉一個東西
+        gameLoopId = requestAnimationFrame(updateGame);
+    }
+
+    // 倒數計時
+    function updateTimer() {
+        timeLeft--;
+        uiTimer.innerText = `⏱️ 倒數: ${timeLeft}s`;
+        if (timeLeft <= 0) {
+            endGame(true);
+        }
+    }
+
+    // 隨機生成物件
+    function spawnObject() {
+        if (!gameActive) return;
+
+        const isHazard = Math.random() > 0.4; // 60% 機率是障礙物，40% 是物資
+        const emoji = isHazard 
+            ? hazards[Math.floor(Math.random() * hazards.length)]
+            : items[Math.floor(Math.random() * items.length)];
+
+        const el = document.createElement('div');
+        el.className = 'game-object';
+        el.innerText = emoji;
+        
+        // 隨機 X 位置百分比
+        const leftPercent = Math.random() * 90 + 5;
+        el.style.left = `${leftPercent}%`;
+        el.style.top = '-50px';
+        container.appendChild(el);
+
+        // 難度隨時間提高 (後期掉落速度變快)
+        const speed = (Math.random() * 3 + 4) + ((60 - timeLeft) * 0.05);
+
+        gameObjects.push({
+            element: el,
+            x: leftPercent,
+            y: -50,
+            speed: speed,
+            isHazard: isHazard
+        });
+    }
+
+    // 遊戲主迴圈 (處理物理運動與碰撞)
+    function updateGame() {
+        if (!gameActive) return;
+
+        const containerHeight = container.clientHeight;
+        const playerRect = player.getBoundingClientRect();
+
+        for (let i = gameObjects.length - 1; i >= 0; i--) {
+            let obj = gameObjects[i];
+            obj.y += obj.speed;
+            obj.element.style.top = `${obj.y}px`;
+
+            // 加上一點颱風風吹的擺動效果 (後半段時間風更大)
+            if (60 - timeLeft > 20) {
+                obj.x += Math.sin(obj.y / 30) * 0.3;
+                obj.element.style.left = `${obj.x}%`;
+            }
+
+            // 碰撞偵測
+            const objRect = obj.element.getBoundingClientRect();
+            const isColliding = !(
+                objRect.right < playerRect.left || 
+                objRect.left > playerRect.right || 
+                objRect.bottom < playerRect.top || 
+                objRect.top > playerRect.bottom
+            );
+
+            if (isColliding) {
+                if (obj.isHazard) {
+                    hp--;
+                    updateHpUI();
+                    if (hp <= 0) endGame(false);
+                } else {
+                    score++;
+                    uiScore.innerText = `📦 物資: ${score}`;
+                }
+                obj.element.remove();
+                gameObjects.splice(i, 1);
+                continue;
+            }
+
+            // 超出螢幕邊界就移除
+            if (obj.y > containerHeight) {
+                obj.element.remove();
+                gameObjects.splice(i, 1);
+            }
+        }
+
+        gameLoopId = requestAnimationFrame(updateGame);
+    }
+
+    function updateHpUI() {
+        let hpStr = '';
+        for(let i=0; i<3; i++) {
+            hpStr += i < hp ? '❤️ ' : '🖤 ';
+        }
+        uiHp.innerText = hpStr;
+    }
+
+    // 結束遊戲
+    function endGame(isWin) {
+        gameActive = false;
+        clearInterval(timerId);
+        clearInterval(spawnId);
+        cancelAnimationFrame(gameLoopId);
+
+        if (isWin) {
+            endTitle.innerText = '🎉 成功挺過颱風！';
+            endScore.innerText = `安全過關！共搶救了 ${score} 個防災物資！`;
+        } else {
+            endTitle.innerText = '😭 阿伯被砸暈了！';
+            endScore.innerText = `颱風太強了...你只拿到了 ${score} 個物資。`;
+        }
+        gameoverScreen.classList.remove('hidden');
+    }
+</script>
+</body>
+</html>
