@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>活力健走王 - 終極音效排行版</title>
+    <title>活力健走王 - 視覺美化版</title>
     <style>
+        * { box-sizing: border-box; }
         body {
-            font-family: 'Microsoft JhengHei', sans-serif;
-            background-color: #e8f5e9;
+            font-family: 'Microsoft JhengHei', 'Apple LiGothic Medium', sans-serif;
+            /* 療癒森林漸層背景 */
+            background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%);
             margin: 0;
             padding: 0;
             display: flex;
@@ -15,142 +17,186 @@
             align-items: center;
             justify-content: center;
             height: 100vh;
+            color: #2c3e50;
         }
+
         #game-container {
             text-align: center;
-            background: white;
-            padding: 30px;
-            border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            width: 90%;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px 20px;
+            border-radius: 32px;
+            /* 柔和陰影，更有質感 */
+            box-shadow: 0 15px 35px rgba(46, 125, 50, 0.2);
+            width: 92%;
             max-width: 440px;
+            border: 4px solid #a5d6a7;
         }
-        h1 { color: #2e7d32; font-size: 32px; margin-bottom: 5px; }
-        .sub-title { font-size: 16px; color: #555; margin-bottom: 20px; }
+
+        /* 標題與副標題：字體放大、親和力強 */
+        h1 { 
+            color: #1b5e20; 
+            font-size: 34px; 
+            margin: 0 0 5px 0; 
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        .sub-title { 
+            font-size: 18px; 
+            color: #4c8c4a; 
+            font-weight: bold;
+            margin-bottom: 20px; 
+        }
         
+        /* 看板：大數字、高對比，適合老花眼 */
         .info-panel {
             display: flex;
             justify-content: space-between;
-            background-color: #f1f8e9;
-            padding: 15px;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: bold;
+            gap: 10px;
             margin-bottom: 20px;
         }
-        .text-green { color: #388e3c; }
-        .text-red { color: #d32f2f; }
+        .info-card {
+            flex: 1;
+            background-color: #f1f8e9;
+            padding: 12px;
+            border-radius: 16px;
+            border: 2px solid #c8e6c9;
+        }
+        .info-label { font-size: 14px; color: #666; margin-bottom: 4px; }
+        .info-val { font-size: 24px; font-weight: bold; }
+        .text-green { color: #2e7d32; }
+        .text-red { color: #c62828; }
         
+        /* 健走步道（進度條）：美化為有草地感 */
         #track {
             width: 100%;
-            height: 35px;
-            background-color: #eee;
-            border-radius: 20px;
-            overflow: hidden;
+            height: 50px;
+            background-color: #f5f5f5;
+            border-radius: 25px;
+            position: relative;
             margin: 25px 0;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+            border: 3px solid #e0e0e0;
+            box-shadow: inset 0 4px 6px rgba(0,0,0,0.05);
+            /* 底紋線，像跑道 */
+            background-image: linear-gradient(90deg, transparent 95%, #e0e0e0 95%);
+            background-size: 10% 100%;
         }
-        #avatar {
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, #81c784, #4caf50);
-            transition: width 0.05s ease;
-            text-align: right;
-            line-height: 35px;
-            font-size: 22px;
-            padding-right: 5px;
-            box-sizing: border-box;
+        
+        /* 帶著帽子微笑的 Q 版健走角色 (SVG) */
+        #avatar-container {
+            position: absolute;
+            left: 0%;
+            top: -15px; /* 讓角色突出來更有立體感 */
+            width: 60px;
+            height: 60px;
+            transition: left 0.1s linear;
         }
 
+        /* 腳步按鈕區：超大按鈕、飽和度高、好按 */
         .btn-container {
             display: flex;
             justify-content: space-around;
-            margin-top: 25px;
+            gap: 20px;
+            margin-top: 20px;
         }
         .foot-btn {
-            width: 130px;
-            height: 130px;
-            font-size: 26px;
+            flex: 1;
+            height: 140px; /* 超大圓角矩形按鈕 */
+            font-size: 28px;
             font-weight: bold;
             color: white;
             border: none;
-            border-radius: 50%;
+            border-radius: 24px;
             cursor: pointer;
-            transition: transform 0.05s;
+            transition: all 0.05s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
-        #left-btn {
-            background: linear-gradient(145deg, #3498db, #2980b9);
-            box-shadow: 0 8px #1f6391, 0 10px 15px rgba(0,0,0,0.1);
-        }
-        #left-btn:active { box-shadow: 0 2px #1f6391; transform: translateY(6px); }
         
-        #right-btn {
-            background: linear-gradient(145deg, #e67e22, #d35400);
-            box-shadow: 0 8px #a04000, 0 10px 15px rgba(0,0,0,0.1);
+        /* 左腳：穩重藍色調 */
+        #left-btn {
+            background: linear-gradient(145deg, #4fc3f7, #0288d1);
+            box-shadow: 0 10px #01579b, 0 12px 20px rgba(2,136,209,0.3);
         }
-        #right-btn:active { box-shadow: 0 2px #a04000; transform: translateY(6px); }
+        #left-btn:active { box-shadow: 0 2px #01579b; transform: translateY(8px); }
+        
+        /* 右腳：活力橘色調 */
+        #right-btn {
+            background: linear-gradient(145deg, #ffb74d, #f57c00);
+            box-shadow: 0 10px #b75100, 0 12px 20px rgba(245,124,0,0.3);
+        }
+        #right-btn:active { box-shadow: 0 2px #b75100; transform: translateY(8px); }
 
         .foot-btn:disabled {
-            background: #cbd5e1 !important;
-            box-shadow: 0 8px #94a3b8 !important;
-            color: #64748b;
+            background: #e2e8f0 !important;
+            box-shadow: 0 10px #cbd5e1 !important;
+            color: #94a3b8;
             cursor: not-allowed;
             transform: none !important;
+            opacity: 0.7;
         }
+        .foot-icon { font-size: 36px; }
 
-        /* 排行榜樣式 */
+        /* 本地排行榜 */
         .leaderboard {
             margin-top: 25px;
             text-align: left;
-            background: #fafafa;
+            background: #fffdf7;
             padding: 15px;
-            border-radius: 12px;
-            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            border: 2px dashed #ffb74d;
         }
-        .leaderboard h3 { margin: 0 0 10px 0; color: #2e7d32; font-size: 18px; text-align: center;}
+        .leaderboard h3 { margin: 0 0 10px 0; color: #e65100; font-size: 18px; text-align: center; display: flex; justify-content: center; align-items: center; gap: 5px;}
         .leaderboard ul { list-style: none; padding: 0; margin: 0; font-size: 16px; }
-        .leaderboard li { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #eee; }
+        .leaderboard li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ffe0b2; font-weight: bold; }
         .leaderboard li:last-child { border-bottom: none; }
 
+        /* 溫馨彈出視窗 */
         .modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.5);
+            background-color: rgba(0,0,0,0.6);
             justify-content: center;
             align-items: center;
             z-index: 100;
+            backdrop-filter: blur(4px);
         }
         .modal-content {
             background-color: white;
             padding: 30px;
-            border-radius: 20px;
-            width: 80%;
-            max-width: 350px;
+            border-radius: 28px;
+            width: 85%;
+            max-width: 360px;
             text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            border: 4px solid #81c784;
         }
-        .modal-content h2 { color: #2e7d32; margin-top: 0; }
-        .modal-content p { font-size: 16px; line-height: 1.6; color: #444; }
+        .modal-content h2 { color: #2e7d32; margin-top: 0; font-size: 26px; }
+        .modal-content p { font-size: 18px; line-height: 1.6; color: #444; font-weight: bold; }
         .modal-btn {
-            background-color: #4caf50;
+            background: linear-gradient(145deg, #66bb6a, #388e3c);
             color: white;
             border: none;
-            padding: 12px 30px;
-            font-size: 18px;
-            border-radius: 10px;
+            padding: 14px 40px;
+            font-size: 20px;
+            border-radius: 16px;
             cursor: pointer;
             margin-top: 15px;
             font-weight: bold;
+            box-shadow: 0 5px #1b5e20;
         }
+        .modal-btn:active { box-shadow: 0 1px #1b5e20; transform: translateY(4px); }
         .name-input {
-            width: 80%;
-            padding: 10px;
-            font-size: 16px;
+            width: 90%;
+            padding: 12px;
+            font-size: 18px;
             margin: 15px 0;
-            border: 2px solid #ccc;
-            border-radius: 8px;
+            border: 2px solid #81c784;
+            border-radius: 12px;
             text-align: center;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -158,27 +204,51 @@
 
 <div id="game-container">
     <h1>🚶‍♂️ 活力健走王</h1>
-    <div class="sub-title">左右踏步聽音辨位，挑戰極限！</div>
+    <div class="sub-title">天天動一動，身體放輕鬆！</div>
     
     <div class="info-panel">
-        <div>步數：<span id="steps" class="text-green">0</span> / 60</div>
-        <div>倒數：<span id="timer" class="text-red">20</span> 秒</div>
+        <div class="info-card">
+            <div class="info-label">🎯 目標步數</div>
+            <div id="steps" class="info-val text-green">0 / 60</div>
+        </div>
+        <div class="info-card">
+            <div class="info-label">⏰ 剩餘時間</div>
+            <div id="timer" class="info-val text-red">20 秒</div>
+        </div>
     </div>
     
     <div id="track">
-        <div id="avatar">🏃‍♂️</div>
+        <div id="avatar-container">
+            <svg viewBox="0 0 60 60" width="100%" height="100%">
+                <circle cx="30" cy="38" r="14" fill="#4caf50"/>
+                <path d="M22 30 Q30 36 38 30" stroke="#fff" stroke-width="2" fill="none"/>
+                <circle cx="30" cy="20" r="10" fill="#ffcc80"/>
+                <path d="M18 16 Q30 10 42 16" stroke="#e65100" stroke-width="4" fill="none" stroke-linecap="round"/>
+                <path d="M16 16 L44 16 Q48 20 44 20 L16 20 Z" fill="#ff9800"/>
+                <circle cx="26" cy="19" r="1.5" fill="#333"/>
+                <circle cx="34" cy="19" r="1.5" fill="#333"/>
+                <path d="M25 24 Q30 28 35 24" stroke="#c62828" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <circle cx="22" cy="22" r="2" fill="#ff8a80" opacity="0.8"/>
+                <circle cx="38" cy="22" r="2" fill="#ff8a80" opacity="0.8"/>
+            </svg>
+        </div>
     </div>
 
     <div class="btn-container">
-        <button id="left-btn" class="foot-btn" onclick="takeStep('left')">左腳</button>
-        <button id="right-btn" class="foot-btn" onclick="takeStep('right')" disabled>右腳</button>
+        <button id="left-btn" class="foot-btn" onclick="takeStep('left')">
+            <span class="foot-icon">👣</span>
+            <span>左 腳</span>
+        </button>
+        <button id="right-btn" class="foot-btn" onclick="takeStep('right')" disabled>
+            <span class="foot-icon">👣</span>
+            <span>右 腳</span>
+        </button>
     </div>
 
-    <!-- 本地排行榜 -->
     <div class="leaderboard">
-        <h3>🏆 本地英雄榜 (最佳時間)</h3>
+        <h3>🏆 今日健走英雄榜 (前五名)</h3>
         <ul id="leaderboard-list">
-            <li><span style="color:#999;">暫無紀錄，等你來挑戰！</span></li>
+            <li><span style="color:#999; font-weight:normal;">暫無紀錄，大師首秀等您來！</span></li>
         </ul>
     </div>
 </div>
@@ -188,15 +258,15 @@
         <h2 id="modal-title">🎉 成功達標！</h2>
         <p id="health-tip"></p>
         <div id="name-input-section">
-            <label for="username" style="font-weight:bold;">請輸入您的尊姓大名留下紀錄：</label>
-            <input type="text" id="username" class="name-input" placeholder="例如：王大明" maxlength="10">
+            <label for="username" style="font-weight:bold; color:#1b5e20;">請留下您的健走大名：</label>
+            <input type="text" id="username" class="name-input" placeholder="例如：美鳳姐、志明伯" maxlength="10">
         </div>
-        <button id="action-btn" class="modal-btn" onclick="submitScore()">提交紀錄並再試一次</button>
+        <button id="action-btn" class="modal-btn" onclick="submitScore()">保存並再走一回</button>
     </div>
 </div>
 
 <script>
-    // 🔴 請在這裡貼上您部署好的 Google Apps Script Web App URL
+    // 🔴 GAS 雲端連動 URL
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyQy3DDpHM6Ps3tW33S1P89bt6SXKstcidPFk9byuomnS7uHCZZcvUtva_xTGClocE/exec";
 
     let steps = 0;
@@ -215,31 +285,28 @@
         if (!audioCtx) audioCtx = new AudioCtx();
     }
 
-    // 播放腳步聲（傳入不同的頻率以區分左右腳）
+    // 區分左右腳音效與聲道
     function playStepSound(isLeft) {
         initAudio();
         let osc = audioCtx.createOscillator();
         let gain = audioCtx.createGain();
         
         osc.type = 'triangle';
-        // 左腳低音沉穩(100Hz)，右腳稍高音明快(150Hz)
-        let baseFreq = isLeft ? 100 : 160;
+        let baseFreq = isLeft ? 110 : 165; // 左腳沉穩低音，右腳明快高音
         osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.1);
         
-        // 分離左右聲道 (左腳偏左、右腳偏右)，增加聽覺層次
         if (audioCtx.createStereoPanner) {
             let panner = audioCtx.createStereoPanner();
-            panner.pan.setValueAtTime(isLeft ? -0.5 : 0.5, audioCtx.currentTime);
+            panner.pan.setValueAtTime(isLeft ? -0.6 : 0.6, audioCtx.currentTime); // 左右聲道分離
             osc.connect(panner);
             panner.connect(gain);
         } else {
             osc.connect(gain);
         }
         
-        gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-        
         gain.connect(audioCtx.destination);
         osc.start();
         osc.stop(audioCtx.currentTime + 0.1);
@@ -268,8 +335,8 @@
         let osc = audioCtx.createOscillator();
         let gain = audioCtx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-        osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.4);
+        osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+        osc.frequency.linearRampToValueAtTime(70, audioCtx.currentTime + 0.4);
         gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
         osc.connect(gain);
@@ -279,15 +346,16 @@
     }
 
     const healthTips = [
-        "飯後散步30分鐘，有助於促進消化、穩定血糖喔！",
-        "健走時記得挺胸縮腹，擺動雙臂，運動效果會加倍！",
-        "多喝水能促進新陳代謝，今天你喝足2000毫升的水了嗎？",
-        "每週健走150分鐘，能有效增強心肺功能，維持健康！"
+        "🌸 飯後散步30分鐘，有助於促進消化、穩定血糖喔！",
+        "💪 健走時記得挺胸收腹，擺動雙臂，運動效果會加倍！",
+        "💧 多喝水能促進新陳代謝，今天你喝足2000毫升的水了嗎？",
+        "❤️ 每週健走150分鐘，能有效增強心肺功能，維持微血管健康！",
+        "👟 出門健走記得穿著包覆性好的運動鞋，保護膝蓋與腳踝。"
     ];
 
     const stepsDisplay = document.getElementById('steps');
     const timerDisplay = document.getElementById('timer');
-    const avatar = document.getElementById('avatar');
+    const avatarContainer = document.getElementById('avatar-container');
     const leftBtn = document.getElementById('left-btn');
     const rightBtn = document.getElementById('right-btn');
     const modal = document.getElementById('health-modal');
@@ -297,22 +365,21 @@
     const nameInputSection = document.getElementById('name-input-section');
     const actionBtn = document.getElementById('action-btn');
 
-    // 載入本地排行榜
     function updateLeaderboardView() {
         const listEl = document.getElementById('leaderboard-list');
         let records = JSON.parse(localStorage.getItem('walk_records')) || [];
         records.sort((a, b) => a.time - b.time);
-        records = records.slice(0, 5); // 取前五名
+        records = records.slice(0, 5);
 
         if (records.length === 0) {
-            listEl.innerHTML = `<li><span style="color:#999;">暫無紀錄，等你來挑戰！</span></li>`;
+            listEl.innerHTML = `<li><span style="color:#999; font-weight:normal;">暫無紀錄，大師首秀等您來！</span></li>`;
             return;
         }
 
         listEl.innerHTML = records.map((r, i) => `
             <li>
-                <span>${i+1}. 👑 ${r.name}</span>
-                <span class="text-green">花費 ${r.time} 秒</span>
+                <span>${i==0?'🥇':i==1?'🥈':i==2?'🥉':'  '}${i+1}. ${r.name}</span>
+                <span class="text-green">${r.time} 秒</span>
             </li>
         `).join('');
     }
@@ -322,7 +389,7 @@
         timerInterval = setInterval(() => {
             if (!gameActive) return;
             timeLeft--;
-            timerDisplay.innerText = timeLeft;
+            timerDisplay.innerText = timeLeft + " 秒";
 
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
@@ -340,12 +407,13 @@
 
         if (foot === nextFoot) {
             steps++;
-            stepsDisplay.innerText = steps;
+            stepsDisplay.innerText = `${steps} / ${targetSteps}`;
             
             playStepSound(foot === 'left');
 
-            let progress = (steps / targetSteps) * 100;
-            avatar.style.width = Math.min(progress, 100) + '%';
+            // 計算小人位置 (扣掉小人本身寬度的安全範圍避免超出)
+            let progress = (steps / targetSteps) * 85;
+            avatarContainer.style.left = progress + '%';
 
             if (foot === 'left') {
                 nextFoot = 'right';
@@ -376,11 +444,11 @@
             const randomTip = healthTips[Math.floor(Math.random() * healthTips.length)];
             healthTip.innerText = randomTip;
             nameInputSection.style.display = 'block';
-            actionBtn.innerText = "提交紀錄並再試一次";
+            actionBtn.innerText = "儲存紀錄並再試一次";
         } else {
             playLoseSound();
             modalTitle.innerText = "⏰ 哎呀，時間到了！";
-            healthTip.innerText = "沒關係，深呼吸一下，我們再試一次！";
+            healthTip.innerText = "沒關係，多動多健康。吸一口氣，我們再試一次！";
             nameInputSection.style.display = 'none';
             actionBtn.innerText = "再挑戰一次";
         }
@@ -390,22 +458,20 @@
 
     function submitScore() {
         if (steps >= targetSteps) {
-            let name = usernameInput.value.trim() || "無名大師";
+            let name = usernameInput.value.trim() || "活力大師";
             
-            // 1. 存入 LocalStorage
             let records = JSON.parse(localStorage.getItem('walk_records')) || [];
             records.push({ name: name, time: parseFloat(timeUsed) });
             localStorage.setItem('walk_records', JSON.stringify(records));
             updateLeaderboardView();
 
-            // 2. 非同步發送給 Google Apps Script (GAS) 收集 IP 及紀錄
             if (GAS_URL && !GAS_URL.includes("XXXXX")) {
                 fetch(GAS_URL, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name: name, timeUsed: timeUsed, steps: steps })
-                }).catch(e => console.log("GAS 發送失敗，請確認部署設定。"));
+                }).catch(e => console.log("GAS 發送失敗"));
             }
         }
         closeModal();
@@ -420,15 +486,14 @@
         gameActive = true;
         usernameInput.value = '';
 
-        stepsDisplay.innerText = steps;
-        timerDisplay.innerText = timeLeft;
-        avatar.style.width = '0%';
+        stepsDisplay.innerText = `0 / ${targetSteps}`;
+        timerDisplay.innerText = timeLeft + " 秒";
+        avatarContainer.style.left = '0%';
         
         leftBtn.disabled = false;
         rightBtn.disabled = true;
     }
 
-    // 初始載入排行榜
     updateLeaderboardView();
 </script>
 </body>
