@@ -3,407 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LINE 快速分享</title>
+    <title>遊戲功能目錄</title>
     <style>
-        :root {
-            --line-green: #06C755;
-            --line-hover: #05b34c;
-            --delete-red: #ef4444;
-            --move-blue: #3b82f6;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 600px;
-            display: flex;
-            flex-direction: column;
-            min-height: calc(100vh - 32px);
-        }
-
-        /* 文字方塊清單區 */
-        .text-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            flex-grow: 1;
-            margin-bottom: 30px;
-        }
-
-        .text-card {
-            background: var(--card-bg);
-            padding: 24px 20px;
-            border-radius: 16px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.06);
-            border: 2px solid #e2e8f0;
-            border-left: 12px solid var(--line-green);
-            cursor: pointer;
-            transition: transform 0.1s, background-color 0.2s;
-        }
-
-        .text-card.view-mode:active {
-            transform: scale(0.98);
-            background-color: #f0fdf4;
-        }
-
-        .card-body {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-        }
-
-        .text-content {
-            font-size: 28px;
-            font-weight: bold;
-            color: #1e293b;
-            line-height: 1.4;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-
-        .share-icon {
-            font-size: 24px;
-            color: var(--line-green);
-            margin-left: 10px;
-            flex-shrink: 0;
-        }
-
-        /* 管理模式下的按鈕區塊 */
-        .admin-controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px dashed #cbd5e1;
-        }
-
-        .admin-btn {
-            flex: 1;
-            padding: 12px;
-            font-size: 18px;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-        }
-
-        .btn-delete { background-color: var(--delete-red); }
-        .btn-move { background-color: var(--move-blue); }
-
-        /* 下方管理區塊 */
-        .footer-admin {
-            margin-top: auto;
-            width: 100%;
-        }
-
-        .toggle-btn {
-            background: none;
-            border: none;
-            color: #94a3b8;
-            font-size: 16px;
-            padding: 10px;
-            width: 100%;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .admin-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-        }
-
-        .admin-content.open {
-            max-height: 400px;
-            padding: 20px;
-            border: 1px solid #e2e8f0;
-            margin-top: 10px;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        input[type="password"], textarea {
-            width: 100%;
-            padding: 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 20px;
-            box-sizing: border-box;
-        }
-
-        textarea {
-            height: 90px;
-            resize: none;
-        }
-
-        .big-btn {
-            width: 100%;
-            padding: 16px;
-            font-size: 22px;
-            font-weight: bold;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .btn-green { background-color: var(--line-green); }
-        .btn-orange { background-color: #f97316; margin-bottom: 10px; }
-
-        /* 顯眼的瀏覽次數樣式 */
-        .counter-view {
-            text-align: center;
-            font-size: 14px;
-            color: #475569; 
-            margin-top: 30px;
-            margin-bottom: 15px;
-            font-weight: bold;
-        }
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #f4f4f9; padding: 50px; }
+        h1 { color: #333; }
+        .menu-container { display: flex; flex-direction: column; align-items: center; gap: 20px; margin-top: 30px; }
+        .menu-btn { display: block; width: 250px; padding: 15px; font-size: 18px; color: white; background-color: #007bff; text-decoration: none; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: background 0.2s; }
+        .menu-btn:hover { background-color: #0056b3; }
+        .loading { color: #666; font-style: italic; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="text-grid" id="textGrid">
-        <div style="text-align:center; color:#94a3b8; padding:40px; font-size:20px;">正在讀取雲端問候語...</div>
+    <h1>🎮 歡迎來到遊戲大廳</h1>
+    <p>請選擇你想遊玩的網頁遊戲：</p>
+
+    <div id="menu" class="menu-container">
+        <p class="loading">正在載入遊戲選單...</p>
     </div>
 
-    <div class="footer-admin">
-        <button class="toggle-btn" id="toggleBtn" onclick="toggleAdminPanel()">⚙️ 管理與維護功能 (點擊展開)</button>
-        
-        <div class="admin-content" id="adminPanel">
-            <div class="input-group">
-                <input type="password" id="password" placeholder="請輸入管理密碼">
-                <button class="big-btn btn-orange" id="modeBtn" onclick="toggleManagementMode()">切換管理模式 (刪除/排序)</button>
-                <hr style="width:100%; border:0; border-top:1px solid #e2e8f0; margin: 5px 0;">
-                <textarea id="newText" placeholder="請輸入要新增的問候語..."></textarea>
-                <button class="big-btn btn-green" onclick="addTextBox()">確認新增方塊</button>
-            </div>
-        </div>
-    </div>
+    <script>
+        // ⚠️ 請把下方網址替換成你剛剛在 GAS 複製的網頁應用程式網址
+        const gasUrl = "https://script.google.com/macros/s/XXXXXX/exec";
 
-    <div class="counter-view" id="viewCounter">瀏覽次數：讀取中...</div>
-</div>
+        // 向 GAS 請求資料
+        fetch(gasUrl)
+            .then(response => response.json())
+            .then(data => {
+                const menuContainer = document.getElementById('menu');
+                menuContainer.innerHTML = ''; // 清空「正在載入...」的文字
 
-<script>
-    // ======= 📝 請在此處填入您的 Google Apps Script 部署網址 =======
-    // const GAS_API_URL = "https://script.google.com/macros/s/XXXXXX/exec"; 
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzfQc8rmLM8oV2GjeIV0co3nF05AGUemfAke4tRGVZIpvsMSfBeCqQXVpotJ0MwkuU/exec";
-    // =========================================================
-
-    let cloudPhrases = [];
-    let isManagementMode = false;
-
-    // 1. 自動從 Google 雲端讀取資料
-    async function loadCloudData() {
-        try {
-            const response = await fetch(GAS_API_URL);
-            const data = await response.json();
-            
-            cloudPhrases = data.phrases;
-            document.getElementById('viewCounter').innerText = `全域總瀏覽次數：${data.views}`;
-            renderCards();
-        } catch (error) {
-            console.error("連線 Google 失敗：", error);
-            document.getElementById('viewCounter').innerText = `瀏覽次數讀取失敗`;
-        }
-    }
-
-    // 2. 將修改送至 Google 進行密碼比對與儲存
-    async function saveToCloud() {
-        const passwordInput = document.getElementById('password').value.trim();
-        if (!passwordInput) {
-            alert("請先在密碼欄輸入管理密碼，才能同步儲存至雲端！");
-            return false;
-        }
-
-        try {
-            const response = await fetch(GAS_API_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    password: passwordInput,
-                    phrases: cloudPhrases
-                })
+                // 根據試算表資料，自動產生 HTML 按鈕
+                data.forEach(item => {
+                    const btn = document.createElement('a');
+                    btn.href = item.url;
+                    btn.className = 'menu-btn';
+                    btn.textContent = item.name;
+                    menuContainer.appendChild(btn);
+                });
+            })
+            .catch(error => {
+                console.error('預載入選單失敗:', error);
+                document.getElementById('menu').innerHTML = '<p style="color:red;">選單載入失敗，請稍後再試</p>';
             });
-            const res = await response.json();
-            if (res.status === "success") {
-                return true;
-            } else {
-                alert("儲存失敗：" + res.message); // 密碼錯誤時會從 GAS 傳回這裏
-                return false;
-            }
-        } catch (e) {
-            alert("同步連線失敗，請檢查網路！");
-            console.error(e);
-            return false;
-        }
-    }
-
-    // 渲染文字方塊
-    function renderCards() {
-        const grid = document.getElementById('textGrid');
-        grid.innerHTML = ''; 
-
-        cloudPhrases.forEach((text, index) => {
-            if(!text) return;
-            const card = document.createElement('div');
-            card.className = `text-card ${isManagementMode ? '' : 'view-mode'}`;
-            
-            if (!isManagementMode) {
-                card.onclick = () => shareToLine(text);
-            }
-
-            let cardHtml = `
-                <div class="card-body">
-                    <div class="text-content">${escapeHtml(text)}</div>
-                    ${isManagementMode ? '' : '<div class="share-icon">➔</div>'}
-                </div>
-            `;
-
-            if (isManagementMode) {
-                cardHtml += `
-                    <div class="admin-controls">
-                        <button class="admin-btn btn-move" onclick="moveCard(${index}, -1)">⬆️ 上移</button>
-                        <button class="admin-btn btn-move" onclick="moveCard(${index}, 1)">⬇️ 下移</button>
-                        <button class="admin-btn btn-delete" onclick="deleteCard(${index})">🗑️ 刪除</button>
-                    </div>
-                `;
-            }
-
-            card.innerHTML = cardHtml;
-            grid.appendChild(card);
-        });
-    }
-
-    // LINE 分享
-    function shareToLine(text) {
-        const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
-        window.open(lineUrl, '_blank');
-    }
-
-    // 控制管理選單展開收合
-    function toggleAdminPanel() {
-        const panel = document.getElementById('adminPanel');
-        const btn = document.getElementById('toggleBtn');
-        
-        if (panel.classList.contains('open')) {
-            panel.classList.remove('open');
-            btn.innerText = "⚙️ 管理與維護功能 (點擊展開)";
-            isManagementMode = false;
-            document.getElementById('modeBtn').innerText = "切換管理模式 (刪除/排序)";
-            renderCards();
-        } else {
-            panel.classList.add('open');
-            btn.innerText = "⚙️ 管理與維護功能 (點擊收合)";
-            setTimeout(() => {
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-            }, 200);
-        }
-    }
-
-    // 切換管理模式（前端先切換，等按下儲存才驗證）
-    function toggleManagementMode() {
-        isManagementMode = !isManagementMode;
-        const modeBtn = document.getElementById('modeBtn');
-        modeBtn.innerText = isManagementMode ? "退出管理模式 (按鈕已顯現)" : "切換管理模式 (刪除/排序)";
-        renderCards();
-    }
-
-    // 新增文字方塊功能
-    async function addTextBox() {
-        const textInput = document.getElementById('newText');
-        const textValue = textInput.value.trim();
-
-        if (!textValue) { alert('請輸入文字內容！'); return; }
-
-        // 先把字加進暫存清單
-        cloudPhrases.push(textValue);
-        
-        // 嘗試推送到 Google 端儲存（此時會驗證輸入的密碼）
-        const success = await saveToCloud();
-        if (success) {
-            renderCards();
-            textInput.value = '';
-            alert('成功！內容已自動寫入並同步至 Google 雲端！');
-        } else {
-            // 失敗的話，把剛才加進去的字扣掉
-            cloudPhrases.pop();
-        }
-    }
-
-    // 刪除功能
-    async function deleteCard(index) {
-        if (confirm(`確定要刪除「${cloudPhrases[index]}」嗎？`)) {
-            const backup = cloudPhrases.splice(index, 1)[0];
-            const success = await saveToCloud();
-            if (success) {
-                renderCards();
-            } else {
-                // 儲存失敗（如密碼錯），還原陣列
-                cloudPhrases.splice(index, 0, backup);
-            }
-        }
-    }
-
-    // 排序功能
-    async function moveCard(index, direction) {
-        const targetIndex = index + direction;
-        if (targetIndex < 0 || targetIndex >= cloudPhrases.length) return;
-        
-        // 交換位置
-        const temp = cloudPhrases[index];
-        cloudPhrases[index] = cloudPhrases[targetIndex];
-        cloudPhrases[targetIndex] = temp;
-        
-        const success = await saveToCloud();
-        if (success) {
-            renderCards();
-        } else {
-            // 儲存失敗，位置換回來
-            const revert = cloudPhrases[index];
-            cloudPhrases[index] = cloudPhrases[targetIndex];
-            cloudPhrases[targetIndex] = revert;
-        }
-    }
-
-    // 安全過濾
-    function escapeHtml(text) {
-        return text
-            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-    }
-
-    // 初始化：載入 Google 雲端資料
-    loadCloudData();
-</script>
-
+    </script>
 </body>
 </html>
