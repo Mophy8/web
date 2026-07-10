@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>活力健走王</title>
+    <title>活力健走王 - 升級版</title>
     <style>
         body {
             font-family: 'Microsoft JhengHei', sans-serif;
-            background-color: #f0f8ff;
+            background-color: #e8f5e9;
             margin: 0;
             padding: 0;
             display: flex;
@@ -20,100 +20,207 @@
             text-align: center;
             background: white;
             padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             width: 90%;
-            max-width: 400px;
+            max-width: 420px;
         }
-        h1 { color: #2e7d32; font-size: 28px; }
-        .score-board { font-size: 24px; margin: 20px 0; font-weight: bold; }
+        h1 { color: #2e7d32; font-size: 32px; margin-bottom: 5px; }
+        .sub-title { font-size: 18px; color: #555; margin-bottom: 20px; }
         
-        /* 角色走路進度條 */
+        /* 資訊看板 */
+        .info-panel {
+            display: flex;
+            justify-content: space-between;
+            background-color: #f1f8e9;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .text-green { color: #388e3c; }
+        .text-red { color: #d32f2f; }
+        
+        /* 進度條 */
         #track {
             width: 100%;
-            height: 30px;
-            background-color: #e0e0e0;
-            border-radius: 15px;
+            height: 35px;
+            background-color: #eee;
+            border-radius: 20px;
             overflow: hidden;
-            margin: 20px 0;
+            margin: 25px 0;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
         }
         #avatar {
-            width: 10%;
+            width: 0%;
             height: 100%;
-            background-color: #4caf50;
-            transition: width 0.2s ease;
+            background: linear-gradient(90deg, #81c784, #4caf50);
+            transition: width 0.1s ease;
             text-align: right;
-            line-height: 30px;
-            color: white;
-            font-size: 14px;
+            line-height: 35px;
+            font-size: 22px;
+            padding-right: 5px;
+            box-sizing: border-box;
         }
 
-        /* 超大按鈕適合手指點擊 */
+        /* 腳步按鈕區 */
         .btn-container {
             display: flex;
             justify-content: space-around;
-            margin-top: 30px;
+            margin-top: 25px;
         }
         .foot-btn {
-            width: 120px;
-            height: 120px;
-            font-size: 22px;
+            width: 130px;
+            height: 130px;
+            font-size: 26px;
             font-weight: bold;
             color: white;
-            background-color: #2196f3;
+            background: linear-gradient(145deg, #3498db, #2980b9);
             border: none;
             border-radius: 50%;
             cursor: pointer;
-            box-shadow: 0 6px #1976d2;
+            box-shadow: 0 8px #1f6391, 0 10px 15px rgba(0,0,0,0.1);
+            transition: transform 0.05s;
         }
         .foot-btn:active {
-            box-shadow: 0 2px #1976d2;
-            transform: translateY(4px);
+            box-shadow: 0 2px #1f6391;
+            transform: translateY(6px);
         }
         .foot-btn:disabled {
-            background-color: #bdbdbd;
-            box-shadow: 0 6px #9e9e9e;
+            background: #cbd5e1;
+            box-shadow: 0 8px #94a3b8;
+            color: #64748b;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 彈出視窗樣式（健康字卡） */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 80%;
+            max-width: 350px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .modal-content h2 { color: #2e7d32; margin-top: 0; }
+        .modal-content p { font-size: 18px; line-height: 1.6; color: #444; }
+        .modal-btn {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <h1>🚶‍♂️ 活力健走王 🚶‍♀️</h1>
-    <p style="font-size: 18px; color: #666;">請交替點擊「左腳」與「右腳」前進！</p>
+    <h1>🚶‍♂️ 活力健走王</h1>
+    <div class="sub-title">雙腳交替點，健康多一點！</div>
     
-    <div class="score-board">目前步數：<span id="steps">0</span> 步</div>
+    <!-- 資訊面板 -->
+    <div class="info-panel">
+        <div>步數：<span id="steps" class="text-green">0</span> / 40</div>
+        <div>倒數：<span id="timer" class="text-red">30</span> 秒</div>
+    </div>
     
+    <!-- 健走進度條 -->
     <div id="track">
         <div id="avatar">🏃‍♂️</div>
     </div>
 
+    <!-- 左右腳按鈕 -->
     <div class="btn-container">
         <button id="left-btn" class="foot-btn" onclick="takeStep('left')">左腳</button>
         <button id="right-btn" class="foot-btn" onclick="takeStep('right')" disabled>右腳</button>
     </div>
 </div>
 
+<!-- 健康字卡彈出視窗 -->
+<div id="health-modal" class="modal">
+    <div class="modal-content">
+        <h2 id="modal-title">🎉 成功達標！</h2>
+        <p id="health-tip">這裡會顯示健康小常識</p>
+        <button class="modal-btn" onclick="closeModal()">再走一回</button>
+    </div>
+</div>
+
 <script>
     let steps = 0;
-    const targetSteps = 50; // 走50步通關
+    const targetSteps = 40; // 目標步數
+    let timeLeft = 30;     // 限時 30 秒
     let nextFoot = 'left';
+    let timerInterval = null;
+    let gameActive = true;
+
+    // 養生健康小常識資料庫
+    const healthTips = [
+        "飯後散步30分鐘，有助於促進消化、穩定血糖喔！",
+        "健走時記得挺胸縮腹，擺動雙臂，運動效果會加倍！",
+        "多喝水能促進新陳代謝，今天你喝足2000毫升的水了嗎？",
+        "每週健走150分鐘，能有效增強心肺功能，維持微血管健康！",
+        "出門健走記得穿著包覆性好的運動鞋，保護膝蓋與腳踝。"
+    ];
 
     const stepsDisplay = document.getElementById('steps');
+    const timerDisplay = document.getElementById('timer');
     const avatar = document.getElementById('avatar');
     const leftBtn = document.getElementById('left-btn');
     const rightBtn = document.getElementById('right-btn');
+    const modal = document.getElementById('health-modal');
+    const healthTip = document.getElementById('health-tip');
+    const modalTitle = document.getElementById('modal-title');
 
+    // 啟動倒數計時器
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            if (!gameActive) return;
+            
+            timeLeft--;
+            timerDisplay.innerText = timeLeft;
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                gameOver(false); // 時間到，挑戰失敗
+            }
+        }, 1000);
+    }
+
+    // 處理點擊步伐
     function takeStep(foot) {
+        if (!gameActive) return;
+
+        // 第一次點擊時啟動計時器
+        if (steps === 0 && !timerInterval) {
+            startTimer();
+        }
+
         if (foot === nextFoot) {
             steps++;
             stepsDisplay.innerText = steps;
 
-            // 更新進度條
+            // 更新前進度
             let progress = (steps / targetSteps) * 100;
             avatar.style.width = Math.min(progress, 100) + '%';
 
-            // 切換左右腳狀態
+            // 交替按鈕狀態
             if (foot === 'left') {
                 nextFoot = 'right';
                 leftBtn.disabled = true;
@@ -124,14 +231,50 @@
                 rightBtn.disabled = true;
             }
 
-            // 檢查是否通關
+            // 檢查是否達標
             if (steps >= targetSteps) {
-                setTimeout(() => {
-                    alert('🎉 恭喜完成今日健走！身體棒棒、活力滿滿！');
-                    resetGame();
-                }, 300);
+                clearInterval(timerInterval);
+                gameOver(true); // 挑戰成功
             }
         }
-    </script>
+    }
+
+    // 遊戲結束（成功或失敗）
+    function gameOver(isWin) {
+        gameActive = false;
+        leftBtn.disabled = true;
+        rightBtn.disabled = true;
+
+        if (isWin) {
+            modalTitle.innerText = "🎉 恭喜完成今日健走！";
+            // 隨機抽一則健康小常識
+            const randomTip = healthTips[Math.floor(Math.random() * healthTips.length)];
+            healthTip.innerText = randomTip;
+        } else {
+            modalTitle.innerText = "⏰ 哎呀，時間到了！";
+            healthTip.innerText = "沒關係，留得青山在，不怕沒柴燒。深呼吸一下，我們再試一次！";
+        }
+        
+        // 顯示彈出視窗
+        modal.style.display = 'flex';
+    }
+
+    // 重設遊戲
+    function closeModal() {
+        modal.style.display = 'none';
+        steps = 0;
+        timeLeft = 30;
+        nextFoot = 'left';
+        timerInterval = null;
+        gameActive = true;
+
+        stepsDisplay.innerText = steps;
+        timerDisplay.innerText = timeLeft;
+        avatar.style.width = '0%';
+        
+        leftBtn.disabled = false;
+        rightBtn.disabled = true;
+    }
+</script>
 </body>
 </html>
