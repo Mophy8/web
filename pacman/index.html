@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>阿郎陪你運動趣 - 零累積純淨量子宇宙</title>
+    <style>
+        body {
+            margin: 0; padding: 0; background-color: #010103; overflow: hidden;
+            font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang TC', sans-serif;
+            user-select: none; -webkit-user-select: none; touch-action: none;
+        }
+        header { position: absolute; top: 20px; left: 20px; z-index: 10; color: #ffffff; }
+        h1 { font-size: 1.2rem; margin: 0; font-weight: 400; letter-spacing: 1px; opacity: 0.9; }
+        a { color: #00e676; text-decoration: none; font-size: 0.85rem; display: inline-block; margin-top: 5px; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+        
+        #view-count {
+            position: absolute; top: 20px; right: 20px; z-index: 10;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.6); padding: 6px 14px; border-radius: 20px; font-size: 0.8rem;
+            backdrop-filter: blur(4px);
+        }
+
+        #voice-status {
+            position: absolute; bottom: 20px; right: 20px; z-index: 10;
+            background: rgba(0, 229, 255, 0.08); border: 1px solid rgba(0, 229, 255, 0.3);
+            color: #00e5ff; padding: 6px 14px; border-radius: 8px; font-size: 0.8rem;
+            backdrop-filter: blur(4px); font-family: monospace;
+        }
+
+        #bubble {
+            position: absolute; background: rgba(3, 3, 8, 0.9); color: #fff;
+            border: 1px solid rgba(0, 230, 118, 0.25);
+            padding: 10px 16px; border-radius: 18px; font-size: 0.9rem; font-weight: 500;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6); pointer-events: none; white-space: nowrap;
+            opacity: 0; display: none; z-index: 5; backdrop-filter: blur(5px);
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>阿郎陪你運動趣</h1>
+        <a href="https://youtube.com/@alanworkoutfun" target="_blank">星際戰術漫遊 ➔</a>
+    </header>
+
+    <div id="view-count">星際能量：連結中...</div>
+    <div id="voice-status">🎙️ 語音系統：點擊畫面啟動高效監聽</div>
+
+    <div id="bubble">航道計算中...</div>
+
+    <canvas id="petCanvas"></canvas>
+
+    <script>
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzyWnhaow1qmcjQQ5znWbYRlsgChFQ0lgbJPJWjn8om1UZESaz0BgJ4RlqBuuc6UL3K/exec';
+
+        const canvas = document.getElementById('petCanvas');
+        const ctx = canvas.getContext('2d');
+        const bubble = document.getElementById('bubble');
+        const viewCountEl = document.getElementById('view-count');
+        const voiceStatusEl = document.getElementById('voice-status');
+
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let quotes = {
+            morning: ["星際早安！跟著阿郎教練，啟動全維度核心！"], afternoon: ["深空航行，也要記得定時舒展身體喔！"],
+            night: ["慢活漫遊，將引擎切換至靜音待機模式。"], sleep: ["探測器休眠中……"],
+            idle: ["在這個角度看著星系，身心都開闊了起來。", "今天去星際頻道看阿郎教練了嗎？", "請對著我大喊『yoyo go』解鎖時空躍遷！"]
+        };
+
+        function loadGASData() {
+            fetch(GAS_URL).then(res => res.json()).then(data => {
+                viewCountEl.innerText = `星際能量：${data.count} 次`;
+                if (data.quotes && data.quotes.idle.length > 0) quotes = data.quotes;
+            }).catch(() => { viewCountEl.innerText = `星際能量：38,400 次`; });
+        }
+        loadGASData();
+
+        // --- 互動音效引擎 ---
+        let audioCtx = null;
+        function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        function playSound(type) {
+            if (!audioCtx) return;
+            let now = audioCtx.currentTime;
+            let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            if (type === 'jump') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(180, now);
+                osc.frequency.exponentialRampToValueAtTime(2000, now + 0.45);
+                gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.45);
+            } else {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.06);
+                gain.gain.setValueAtTime(0.03, now); gain.gain.linearRampToValueAtTime(0, now + 0.06);
+            }
+            osc.start(now); osc.stop(now + (type === 'jump' ? 0.45 : 0.06));
+        }
+
+        // --- 🎙️ 語音辨識核心 ---
+        let recognition;
+        let isVoiceActive = false;
+
+        function initVoiceRecognition() {
+            if (isVoiceActive || hyperspace.active) return;
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                voiceStatusEl.innerText = "❌ 瀏覽器不支援語音辨識";
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.continuous = true; 
+            recognition.interimResults = true; 
+            recognition.lang = 'en-US'; 
+
+            recognition.onstart = () => { 
+                isVoiceActive = true;
+                voiceStatusEl.innerText = "🎙️ 語音高效聆聽中：請說「yoyo go」"; 
+            };
+            
+            recognition.onerror = (e) => { console.log("系統動態校正:", e.error); };
+            
+            recognition.onend = () => { 
+                isVoiceActive = false;
+                if (!hyperspace.active) {
+                    try { recognition.start(); } catch(err) {}
+                }
+            };
+
+            recognition.onresult = (event) => {
+                let resultText = "";
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    resultText += event.results[i][0].transcript.toLowerCase();
+                }
+                
+                voiceStatusEl.innerText = `🎙️ 偵測音訊: "${resultText.trim()}"`;
+
+                const triggerWords = [
+                    "yoyo go", "yo yo go", "yoyogo", "you you go", "youyou go",
+                    "oil go", "oilo go", "google", "yoyo", "yo yo", "gogo", "go go",
+                    "yo u go", "lolo go", "yoyo cool", "yoyo pole"
+                ];
+
+                let matched = triggerWords.some(word => resultText.includes(word));
+                if (matched) {
+                    triggerHyperspaceJump();
+                }
+            };
+
+            try { recognition.start(); } catch(e) {}
+        }
+
+        window.addEventListener('click', () => { initAudio(); initVoiceRecognition(); });
+        window.addEventListener('touchstart', () => { initAudio(); initVoiceRecognition(); });
+
+        // --- 輸入控制 ---
+        const input = { x: window.innerWidth/2, y: window.innerHeight/2, active: false };
+        let lastTouchFormReset = true;
+
+        function updateInputPosition(clientX, clientY) { input.x = clientX; input.y = clientY; }
+        window.addEventListener('mousemove', (e) => { updateInputPosition(e.clientX, e.clientY); });
+        canvas.addEventListener('mousedown', () => { input.active = true; lastTouchFormReset = true; });
+        window.addEventListener('mouseup', () => { input.active = false; });
+        
+        window.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0]; input.active = true; lastTouchFormReset = true;
+            updateInputPosition(touch.clientX, touch.clientY);
+        }, { passive: true });
+        window.addEventListener('touchmove', (e) => { const touch = e.touches[0]; updateInputPosition(touch.clientX, touch.clientY); }, { passive: true });
+        window.addEventListener('touchend', () => { input.active = false; });
+
+        // --- 時空跳躍機制 ---
+        const hyperspace = { active: false, progress: 0, maxProgress: 180, shake: 0 };
+
+        function triggerHyperspaceJump() {
+            if (hyperspace.active) return;
+            hyperspace.active = true;
+            hyperspace.progress = hyperspace.maxProgress;
+            
+            try { if (recognition) recognition.stop(); } catch(e) {}
+            
+            playSound('jump');
+            speak("🚀 語音辨識解鎖！曲率核心突破100%，開啟維度躍遷！", 3500);
+        }
+
+        // --- 背景星空與動態 ---
+        const stars = [];
+        for(let i=0; i<110; i++) stars.push({ x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight, z: Math.random() * 800 + 10, size: Math.random() * 1.2 + 0.5 });
+        
+        function drawStars() {
+            let cx = window.innerWidth / 2; let cy = window.innerHeight / 2;
+            stars.forEach(s => {
+                if (hyperspace.active) s.z -= 45; else s.z -= 0.35;
+                if(s.z <= 0) s.z = 800; 
+                let f = 300 / s.z; let screenX = (s.x - cx) * f + cx; let screenY = (s.y - cy) * f + cy;
+                let alpha = (1 - s.z / 800);
+                
+                // 擴大渲染裁切邊緣，防止拉伸時邊界像素遺漏
+                if (screenX >= -40 && screenX <= canvas.width + 40 && screenY >= -40 && screenY <= canvas.height + 40) {
+                    ctx.beginPath();
+                    if (hyperspace.active) {
+                        let prevF = 300 / (s.z + 55);
+                        ctx.moveTo(screenX, screenY); ctx.lineTo((s.x - cx) * prevF + cx, (s.y - cy) * prevF + cy);
+                        ctx.strokeStyle = `rgba(140, 215, 255, ${alpha * 0.9})`; ctx.lineWidth = s.size * f * 0.4; ctx.stroke();
+                    } else {
+                        ctx.arc(screenX, screenY, s.size * f * 0.5, 0, Math.PI*2); ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.45})`; ctx.fill();
+                    }
+                }
+            });
+        }
+
+        // --- 精靈與型態設定 ---
+        const pet = {
+            x: window.innerWidth / 2, y: window.innerHeight / 2,
+            targetX: window.innerWidth / 2, targetY: window.innerHeight / 2,
+            vx: 0, vy: 0, speed: 0.015, baseRadius: 40, pulseTimer: 0,
+            isTalking: false, talkTimer: 0,
+            formType: 'normal', geomType: 'cube', rotX: 0, rotY: 0, rotZ: 0, cubeParticles: [] 
+        };
+
+        const normalParticles = [];
+        for (let i = 0; i < 180; i++) {
+            normalParticles.push({ angle: (i / 180) * Math.PI * 2, size: Math.random() * 1.8 + 1.2, seed: Math.random() * 100 });
+        }
+
+        function buildGeometryParticles(type) {
+            pet.cubeParticles = [];
+            let spacing = 8.5;
+
+            if (type === 'cube') { 
+                let size = 6;
+                for (let x = 0; x < size; x++) {
+                    for (let y = 0; y < size; y++) {
+                        for (let z = 0; z < size; z++) {
+                            pet.cubeParticles.push({
+                                cx: (x - (size-1)/2) * spacing, cy: (y - (size-1)/2) * spacing, cz: (z - (size-1)/2) * spacing,
+                                size: Math.random()*1.2 + 1.6, color: '#00e5ff'
+                            });
+                        }
+                    }
+                }
+            } else if (type === 'pyramid') { 
+                let layers = 7;
+                for (let l = 0; l < layers; l++) {
+                    let currentWidth = (layers - l) * 4; let yPos = (l - layers/2) * spacing;
+                    for (let i = 0; i < currentWidth; i++) {
+                        let angle = (i / currentWidth) * Math.PI * 2; let radius = (layers - l) * 4.5;
+                        for(let r = 0; r <= radius; r += 4.5) {
+                            pet.cubeParticles.push({
+                                cx: Math.cos(angle) * r, cy: yPos, cz: Math.sin(angle) * r,
+                                size: Math.random()*1.1 + 1.5, color: '#00b0ff'
+                            });
+                        }
+                    }
+                }
+            } else if (type === 'prism') { 
+                let heightSegments = 7; let radiusSegments = 4;
+                for (let h = 0; h < heightSegments; h++) {
+                    let zPos = (h - (heightSegments-1)/2) * spacing;
+                    for (let r = 1; r <= radiusSegments; r++) {
+                        let dotCount = r * 6;
+                        for (let i = 0; i < dotCount; i++) {
+                            let angle = (i / dotCount) * Math.PI * 2;
+                            pet.cubeParticles.push({
+                                cx: Math.cos(angle) * (r * 7), cy: Math.sin(angle) * (r * 7), cz: zPos,
+                                size: Math.random()*1.2 + 1.5, color: '#eceff1'
+                            });
+                        }
+                    }
+                    pet.cubeParticles.push({ cx: 0, cy: 0, cz: zPos, size: 2, color: '#eceff1' });
+                }
+            } else { 
+                for (let i = 0; i < 220; i++) {
+                    let theta = Math.random() * Math.PI * 2; let phi = Math.acos((Math.random() * 2) - 1); let dist = (Math.random() * 22) + 6;
+                    pet.cubeParticles.push({
+                        cx: Math.sin(phi) * Math.cos(theta) * dist, cy: Math.sin(phi) * Math.sin(theta) * dist, cz: Math.cos(phi) * dist,
+                        size: Math.random()*1.3 + 1.4, color: '#76ff03'
+                    });
+                }
+            }
+        }
+
+        function updateTarget() {
+            if (input.active || hyperspace.active) return;
+            pet.targetX = Math.random() * (canvas.width - 260) + 130; pet.targetY = Math.random() * (canvas.height - 260) + 130;
+            
+            if (pet.formType === 'geometry' && Math.random() < 0.5) {
+                const types = ['cube', 'pyramid', 'prism', 'poly'];
+                pet.geomType = types[Math.floor(Math.random() * types.length)];
+                buildGeometryParticles(pet.geomType);
+            }
+        }
+        setInterval(updateTarget, 7000);
+
+        function speak(text, duration = 2500) {
+            bubble.innerText = text; 
+            bubble.style.display = 'block'; 
+            pet.isTalking = true;
+            clearTimeout(pet.talkTimer); pet.talkTimer = setTimeout(() => { hideBubble(); }, duration);
+        }
+        function hideBubble() { bubble.style.display = 'none'; bubble.style.opacity = '0'; pet.isTalking = false; }
+
+        function toggleForm() {
+            if (hyperspace.active) return;
+            hideBubble();
+            if (pet.formType === 'normal') {
+                pet.formType = 'geometry';
+                const types = ['cube', 'pyramid', 'prism', 'poly'];
+                pet.geomType = types[Math.floor(Math.random() * types.length)];
+                buildGeometryParticles(pet.geomType);
+                speak("幾何型態：多維實心矩陣展開！");
+            } else {
+                pet.formType = 'normal';
+                speak("量子型態：進入漫遊感應模式。");
+            }
+        }
+
+        let behaviorTimer = 0;
+        function updateBehaviorRunner() {
+            behaviorTimer++;
+            if (behaviorTimer > 600) {
+                behaviorTimer = 0;
+                if (!pet.isTalking && Math.random() < 0.15 && !hyperspace.active) {
+                    speak(quotes.idle[Math.floor(Math.random() * quotes.idle.length)]);
+                }
+            }
+            if (pet.formType === 'geometry') {
+                pet.rotX += 0.014; pet.rotY += 0.018; pet.rotZ += 0.010;
+            }
+        }
+
+        function rotate3D(x, y, z, ax, ay, az) {
+            let cosX = Math.cos(ax), sinX = Math.sin(ax); let y1 = y * cosX - z * sinX; let z1 = y * sinX + z * cosX;
+            let cosY = Math.cos(ay), sinY = Math.sin(ay); let x2 = x * cosY + z1 * sinY; z2 = -x * sinY + z1 * cosY;
+            let cosZ = Math.cos(az), sinZ = Math.sin(az); return { x: x2 * cosZ - y1 * sinZ, y: x2 * sinZ + y1 * cosZ, z: z2 };
+        }
+
+        // --- 主渲染引擎大循環 ---
+        function animate() {
+            // 💡 【核心修正】：清空畫布與塗佈半透明黑底必須在任何震動位移（translate）之前執行！
+            // 這樣做可以確保清除動作永遠對準螢幕絕對坐標系，完全封死震動導致的覆蓋死角，像素徹底清零。
+            ctx.clearRect(-20, -20, canvas.width + 40, canvas.height + 40);
+            ctx.fillStyle = 'rgba(1, 1, 3, 0.28)';
+            ctx.fillRect(-20, -20, canvas.width + 40, canvas.height + 40);
+            
+            // 背景清理完畢後，再進行超空間躍遷的畫面晃動處理
+            if (hyperspace.active) {
+                hyperspace.progress--;
+                hyperspace.shake = Math.sin(hyperspace.progress * 2.0) * 10;
+                ctx.save(); 
+                ctx.translate(hyperspace.shake, Math.cos(hyperspace.progress) * 5);
+                
+                if (hyperspace.progress <= 0) {
+                    hyperspace.active = false;
+                    pet.vx = 0; pet.vy = 0;
+                    pet.x = window.innerWidth / 2; pet.y = window.innerHeight / 2;
+                    pet.targetX = pet.x; pet.targetY = pet.y;
+                    isVoiceActive = false;
+                    initVoiceRecognition(); 
+                }
+            }
+
+            updateSpaceObjectRunner(); updateBehaviorRunner();
+            drawStars(); drawSpaceObject();
+
+            if (input.active && !hyperspace.active) { pet.targetX = input.x; pet.targetY = input.y; }
+
+            pet.vx += (pet.targetX - pet.x) * pet.speed; pet.vy += (pet.targetY - pet.y) * pet.speed;
+            pet.vx *= 0.84; pet.vy *= 0.84; pet.x += pet.vx; pet.y += pet.vy;
+
+            let speed = Math.sqrt(pet.vx * pet.vx + pet.vy * pet.vy);
+            let travelAngle = Math.atan2(pet.vy, pet.vx);
+
+            let mDx = input.x - pet.x; let mDy = input.y - pet.y;
+            let isTouching = input.active && Math.sqrt(mDx*mDx + mDy*mDy) < 70 && !hyperspace.active;
+            
+            if (isTouching) {
+                pet.pulseTimer += 0.05;
+                if (lastTouchFormReset) { playSound('click'); toggleForm(); lastTouchFormReset = false; }
+            } else { pet.pulseTimer += 0.025; }
+
+            // 智慧對話框防切邊
+            if (pet.isTalking) {
+                let bubbleWidth = bubble.offsetWidth || 180;
+                let bubbleHeight = bubble.offsetHeight || 45;
+                let margin = 16; 
+
+                let idealLeft = pet.x - bubbleWidth / 2;
+                let idealTop = pet.y - bubbleHeight - 25;
+
+                if (idealLeft < margin) { idealLeft = margin; } 
+                else if (idealLeft + bubbleWidth > window.innerWidth - margin) { idealLeft = window.innerWidth - bubbleWidth - margin; }
+                if (idealTop < margin) idealTop = pet.y + 40; 
+
+                bubble.style.left = `${idealLeft}px`;
+                bubble.style.top = `${idealTop}px`;
+                bubble.style.opacity = '1';
+            } else { 
+                hideBubble(); 
+            }
+
+            // 粒子前進推進火焰
+            if (pet.formType === 'geometry' && speed > 0.5 && !hyperspace.active) {
+                let thrusterCount = Math.min(5, Math.floor(speed * 1.2));
+                for (let k = 0; k < thrusterCount; k++) {
+                    let fireAngle = travelAngle + Math.PI + (Math.random() - 0.5) * 0.4; 
+                    let fireX = pet.x + Math.cos(fireAngle) * (25 + Math.random() * speed * 4);
+                    let fireY = pet.y + Math.sin(fireAngle) * (25 + Math.random() * speed * 4);
+                    let fireRadius = Math.random() * 4 + 1.5;
+                    let grad = ctx.createRadialGradient(fireX, fireY, 0, fireX, fireY, fireRadius);
+                    grad.addColorStop(0, '#ffffff'); grad.addColorStop(0.4, '#00e5ff'); grad.addColorStop(1, 'rgba(0, 229, 255, 0)'); 
+                    ctx.beginPath(); ctx.arc(fireX, fireY, fireRadius, 0, Math.PI * 2); ctx.fillStyle = grad; ctx.fill();
+                }
+            }
+
+            // 繪製本體
+            if (pet.formType === 'geometry' && !hyperspace.active) {
+                const renderedPoints = pet.cubeParticles.map(p => {
+                    let rotated = rotate3D(p.cx, p.cy, p.cz, pet.rotX, pet.rotY, pet.rotZ);
+                    let finalRotated = rotate3D(rotated.x, rotated.y, rotated.z, -pet.vy * 0.015, pet.vx * 0.015, 0);
+                    let f = 200 / (200 + finalRotated.z);
+                    return { x: pet.x + finalRotated.x * f * 1.4, y: pet.y + finalRotated.y * f * 1.4, z: finalRotated.z, size: p.size * f, color: p.color };
+                });
+                renderedPoints.sort((a, b) => b.z - a.z);
+                renderedPoints.forEach(p => {
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fillStyle = p.color; ctx.fill();
+                });
+            } else if (!hyperspace.active) {
+                let normalScale = (1 + Math.sin(pet.pulseTimer * 1.5) * 0.15);
+                let normalLightnessAlpha = 0.75 + Math.sin(pet.pulseTimer * 2.2) * 0.25;
+                normalParticles.forEach((p) => {
+                    let pulse = Math.sin(pet.pulseTimer + p.seed) * 3;
+                    let r = (pet.baseRadius + pulse) * normalScale;
+                    ctx.beginPath(); ctx.arc(pet.x + Math.cos(p.angle) * r, pet.y + Math.sin(p.angle) * r, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = isTouching ? `hsla(342, 95%, 72%, ${normalLightnessAlpha})` : `hsla(${186 + Math.sin(pet.pulseTimer)*10}, 75%, 65%, ${normalLightnessAlpha})`; 
+                    ctx.fill();
+                });
+            }
+
+            if (hyperspace.active) ctx.restore(); // 結束震動空間矩陣
+            requestAnimationFrame(animate);
+        }
+
+        // --- 🪐 實心格點星體引擎 ---
+        const planetColors = [ [45, 135, 210], [225, 110, 40], [155, 80, 200] ];
+        const activeSpaceObject = { 
+            x: 0, y: 0, z: -100, r: 50, dotCloud: [], colorBase: [45, 135, 210], 
+            subType: 'real', isVolcanic: false, volcanicTimer: 0, eruptions: [],
+            planetRotX: 0, planetRotY: 0 
+        };
+        let objectSpawnTimer = 0;
+
+        function buildGridPlanet(subType) {
+            activeSpaceObject.dotCloud = [];
+            activeSpaceObject.eruptions = [];
+            activeSpaceObject.volcanicTimer = 0;
+            activeSpaceObject.planetRotX = Math.random() * Math.PI;
+            activeSpaceObject.planetRotY = Math.random() * Math.PI;
+            
+            let res = 9; 
+            let radius = activeSpaceObject.r;
+            
+            for (let x = -res; x <= res; x++) {
+                for (let y = -res; y <= res; y++) {
+                    for (let z = -res; z <= res; z++) {
+                        let cx = (x / res) * radius; let cy = (y / res) * radius; let cz = (z / res) * radius;
+                        let dist = Math.sqrt(cx*cx + cy*cy + cz*cz);
+                        
+                        if (dist <= radius) {
+                            if (subType === 'broken' && cx > radius * 0.2 && cy < -radius * 0.1) continue; 
+                            activeSpaceObject.dotCloud.push({
+                                origX: cx, origY: cy, origZ: cz, 
+                                size: Math.random() * 1.1 + 1.2,
+                                baseBrightness: 0.5 + (cz + radius) / (radius * 2) * 0.5
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        function updateSpaceObjectRunner() {
+            if (activeSpaceObject.z > 0) { 
+                if (hyperspace.active) activeSpaceObject.z -= 18; else activeSpaceObject.z -= 1.1; 
+                
+                activeSpaceObject.planetRotY += 0.004;
+                activeSpaceObject.planetRotX += 0.002;
+                
+                if (activeSpaceObject.subType === 'broken' && activeSpaceObject.isVolcanic && !hyperspace.active) {
+                    activeSpaceObject.volcanicTimer++;
+                    if (activeSpaceObject.volcanicTimer % 130 === 0 && Math.random() < 0.7) {
+                        for(let i=0; i<16; i++) {
+                            activeSpaceObject.eruptions.push({
+                                ex: activeSpaceObject.r * 0.3, ey: -activeSpaceObject.r * 0.3, ez: (Math.random() - 0.5) * activeSpaceObject.r,
+                                vx: (Math.random() * 3 + 2), vy: -(Math.random() * 3 + 2), vz: (Math.random() - 0.5) * 2, life: 35 + Math.random() * 20
+                            });
+                        }
+                    }
+                    activeSpaceObject.eruptions.forEach(p => { p.ex += p.vx; p.ey += p.vy; p.ez += p.vz; p.life--; });
+                    activeSpaceObject.eruptions = activeSpaceObject.eruptions.filter(p => p.life > 0);
+                }
+                return; 
+            }
+
+            objectSpawnTimer++;
+            if (objectSpawnTimer > 800) {
+                objectSpawnTimer = 0;
+                if (Math.random() < 0.5 && !hyperspace.active) {
+                    activeSpaceObject.z = 1100;
+                    activeSpaceObject.x = Math.random() * (window.innerWidth * 0.6) + window.innerWidth * 0.2;
+                    activeSpaceObject.y = Math.random() * (window.innerHeight * 0.4) + window.innerHeight * 0.3;
+                    activeSpaceObject.r = Math.random() * 12 + 48;
+                    
+                    let roll = Math.random();
+                    activeSpaceObject.subType = (roll < 0.5) ? 'real' : 'broken';
+                    activeSpaceObject.isVolcanic = (activeSpaceObject.subType === 'broken' && Math.random() < 0.5);
+                    activeSpaceObject.colorBase = planetColors[Math.floor(Math.random() * planetColors.length)];
+                    
+                    buildGridPlanet(activeSpaceObject.subType);
+                }
+            }
+        }
+
+        function drawSpaceObject() {
+            if (activeSpaceObject.z <= 0) return;
+            let f = 400 / activeSpaceObject.z;
+            let sX = (activeSpaceObject.x - window.innerWidth/2) * f + window.innerWidth/2;
+            let sY = (activeSpaceObject.y - window.innerHeight/2) * f + window.innerHeight/2;
+            let alpha = activeSpaceObject.z < 80 ? (activeSpaceObject.z / 80) : (1 - activeSpaceObject.z / 1100);
+            
+            const rotatedPlanetPoints = activeSpaceObject.dotCloud.map(p => {
+                let rot = rotate3D(p.origX, p.origY, p.origZ, activeSpaceObject.planetRotX, activeSpaceObject.planetRotY, 0);
+                return {
+                    projX: sX + rot.x * f, projY: sY + rot.y * f, depthZ: rot.z,
+                    size: p.size * Math.max(0.4, f * 0.85), brightness: p.baseBrightness
+                };
+            });
+
+            rotatedPlanetPoints.sort((a, b) => b.depthZ - a.depthZ);
+
+            rotatedPlanetPoints.forEach((p) => {
+                let finalAlpha = p.brightness * alpha * (1 + p.depthZ / activeSpaceObject.r * 0.3);
+                ctx.beginPath(); ctx.arc(p.projX, p.projY, p.size, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(${activeSpaceObject.colorBase[0]}, ${activeSpaceObject.colorBase[1]}, ${activeSpaceObject.colorBase[2]}, ${Math.max(0, finalAlpha)})`;
+                ctx.fill();
+            });
+
+            if (activeSpaceObject.subType === 'broken' && activeSpaceObject.isVolcanic && !hyperspace.active) {
+                activeSpaceObject.eruptions.forEach(p => {
+                    ctx.beginPath(); ctx.arc(sX + p.ex * f, sY + p.ey * f, (2 + Math.random()*2) * f, 0, Math.PI*2);
+                    ctx.fillStyle = `rgba(255, 235, 59, ${alpha * (p.life / 55)})`; ctx.fill();
+                });
+            }
+        }
+
+        animate();
+    </script>
+</body>
+</html>
