@@ -2,38 +2,125 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>遊戲功能目錄</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>功能目錄</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background-color: #f4f4f9; padding: 50px; }
-        h1 { color: #333; }
-        .menu-container { display: flex; flex-direction: column; align-items: center; gap: 20px; margin-top: 30px; }
-        .menu-btn { display: block; width: 250px; padding: 15px; font-size: 18px; color: white; background-color: #007bff; text-decoration: none; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: background 0.2s; }
-        .menu-btn:hover { background-color: #0056b3; }
-        .loading { color: #666; font-style: italic; }
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            text-align: center; 
+            background-color: #f8f9fa; 
+            margin: 0;
+            padding: 20px 15px 60px 15px; /* 底部留空間給計數器 */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        h1 { font-size: 24px; color: #212529; margin: 15px 0 25px 0; }
+        
+        /* 上方頻道連結區塊 */
+        .channel-container {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .channel-link {
+            flex: 1;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            white-space: nowrap; /* 強制不折行 */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .tiktok { background-color: #010101; }
+        .youtube { background-color: #ff0000; }
+
+        /* 功能目錄按鈕區塊 */
+        .menu-container { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 15px; 
+            margin-top: 15px;
+            flex-grow: 1; /* 推擠空間 */
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .menu-btn { 
+            display: block; 
+            width: 100%; /* 寬度自動適應手機 */
+            padding: 16px; 
+            font-size: 18px; 
+            font-weight: 500;
+            color: #333; 
+            background-color: white; 
+            text-decoration: none; 
+            border-radius: 12px; 
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            transition: transform 0.1s, background-color 0.2s;
+            white-space: nowrap; /* 強制不折行 */
+            overflow: hidden; /* 隱藏超出部分 */
+            text-overflow: ellipsis; /* 文字過長時顯示 ... */
+        }
+        .menu-btn:active { 
+            transform: scale(0.98);
+            background-color: #f1f3f5;
+        }
+        .loading { color: #868e96; font-size: 15px; margin-top: 30px; }
+
+        /* 底部瀏覽次數 */
+        .counter-footer {
+            font-size: 13px;
+            color: #868e96;
+            margin-top: auto; /* 永遠釘在最下面 */
+            padding-top: 30px;
+        }
+        #view-count { font-weight: bold; color: #495057; }
     </style>
 </head>
 <body>
 
-    <h1>🎮 歡迎來到遊戲大廳</h1>
-    <p>請選擇你想遊玩的網頁遊戲：</p>
+    <!-- 1. 上方頻道連結 -->
+    <div class="channel-container">
+        <a href="http://tiktok.com/@alanworkoutfun" target="_blank" class="channel-link tiktok">🎵 阿郎運動趣</a>
+        <a href="https://www.youtube.com/@AlanWorkoutFun" target="_blank" class="channel-link youtube">📺 阿郎愛分享</a>
+    </div>
 
+    <!-- 2. 主標題 (無副標) -->
+    <h1>🎮 功能目錄</h1>
+
+    <!-- 3. 功能目錄選單 -->
     <div id="menu" class="menu-container">
-        <p class="loading">正在載入遊戲選單...</p>
+        <p class="loading">正在載入選單...</p>
+    </div>
+
+    <!-- 4. 最下方瀏覽次數 -->
+    <div class="counter-footer">
+        瀏覽次數：<span id="view-count">載入中...</span>
     </div>
 
     <script>
-        // ⚠️ 請把下方網址替換成你剛剛在 GAS 複製的網頁應用程式網址
-        const gasUrl = "https://script.google.com/macros/s/AKfycby8bENfwyaMDnGZdB4t7JjOjN8EJaU_Tri_6lGYvW9F1-Ce_xijdaQqPmFdX7R2bA8/exec";
+        // ⚠️ 請替換成你部署後的 GAS 網頁應用程式網址
+        const gasUrl = "https://script.google.com/macros/s/XXXXXX/exec";
 
-        // 向 GAS 請求資料
+        // 功能一：讀取目錄選單 (index)
         fetch(gasUrl)
             .then(response => response.json())
             .then(data => {
                 const menuContainer = document.getElementById('menu');
-                menuContainer.innerHTML = ''; // 清空「正在載入...」的文字
+                menuContainer.innerHTML = ''; 
 
-                // 根據試算表資料，自動產生 HTML 按鈕
                 data.forEach(item => {
                     const btn = document.createElement('a');
                     btn.href = item.url;
@@ -43,8 +130,19 @@
                 });
             })
             .catch(error => {
-                console.error('預載入選單失敗:', error);
-                document.getElementById('menu').innerHTML = '<p style="color:red;">選單載入失敗，請稍後再試</p>';
+                console.error('載入選單失敗:', error);
+                document.getElementById('menu').innerHTML = '<p style="color:#fa5252;">選單載入失敗</p>';
+            });
+
+        // 功能二：增加並讀取瀏覽次數 (indexcount)
+        fetch(`${gasUrl}?action=getCount`)
+            .then(response => response.text())
+            .then(count => {
+                document.getElementById('view-count').textContent = count;
+            })
+            .catch(error => {
+                console.error('計數器失敗:', error);
+                document.getElementById('view-count').textContent = '--';
             });
     </script>
 </body>
