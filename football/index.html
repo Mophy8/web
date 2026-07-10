@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>阿郎陪你運動趣 - 迷你足球遊戲</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #2c3e50;
+            color: #fff;
+            text-align: center;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1.5vh 10px;
+        }
+        header { flex-shrink: 0; }
+        h1 { color: #f1c40f; font-size: 1.6rem; margin-bottom: 2px; white-space: nowrap; }
+        h2 { font-size: 0.9rem; color: #bdc3c7; font-weight: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        a { color: #3498db; text-decoration: none; font-weight: bold; }
+
+        .stats-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 0.5vh auto;
+            width: 100%;
+            max-width: 500px;
+            background: rgba(0,0,0,0.2);
+            padding: 6px;
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+        .stat-box { font-size: 0.8rem; flex: 1; white-space: nowrap; }
+        .stat-box span { display: block; font-size: 1.3rem; font-weight: bold; color: #2ecc71; }
+        #miss-count { color: #e74c3c; }
+
+        /* 遊戲區域 */
+        #game-stage {
+            width: 100%;
+            max-width: 500px;
+            flex-grow: 1;
+            max-height: 45vh;
+            background: #27ae60;
+            margin: 0 auto;
+            position: relative;
+            border: 5px solid #fff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        #goal {
+            width: 260px;
+            height: 50px;
+            border: 4px solid #fff;
+            border-bottom: none;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        #gk-container {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+            transition: transform 0.2s ease;
+        }
+        #gk-emoji { font-size: 30px; line-height: 1; transition: font-size 0.3s ease; }
+        #gk-name { font-size: 9px; background: rgba(0,0,0,0.6); padding: 1px 6px; border-radius: 3px; margin-top: 1px; white-space: nowrap; }
+
+        /* 足球 */ 
+        #football {
+            width: 42px;
+            height: 42px;
+            background: #fff;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            transition: bottom 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 5;
+        }
+        #aim-line {
+            position: absolute;
+            bottom: 38px;
+            left: 50%;
+            width: 2px;
+            height: 90px;
+            background: repeating-linear-gradient(to top, transparent, transparent 4px, #f1c40f 4px, #f1c40f 8px);
+            transform-origin: bottom center;
+            z-index: 2;
+        }
+        
+        /* 訊息提示：允許自動折行，調整字體與行高 */
+        #message {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.35rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 5px #000;
+            display: none;
+            z-index: 10;
+            width: 90%;
+            white-space: normal; /* 允許文字折行 */
+            line-height: 1.4;
+            padding: 5px;
+        }
+
+        /* 控制與排行榜 */
+        .controls {
+            width: 100%;
+            max-width: 500px;
+            margin: 0.5vh auto;
+            background: rgba(0,0,0,0.1);
+            padding: 6px 15px;
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+        .slider-container { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 5px; font-size: 0.85rem; }
+        input[type=range] { flex-grow: 1; height: 6px; cursor: pointer; }
+        .kick-btn {
+            background-color: #e67e22; color: white; border: none; padding: 6px 25px;
+            font-size: 1rem; font-weight: bold; border-radius: 20px; cursor: pointer; box-shadow: 0 3px #d35400;
+        }
+        .kick-btn:active { transform: translateY(2px); box-shadow: 0 1px #d35400; }
+
+        .leaderboard {
+            width: 100%; max-width: 500px; margin: 0.5vh auto;
+            background: rgba(255,255,255,0.05); padding: 5px; border-radius: 8px;
+            font-size: 0.8rem; flex-shrink: 0; white-space: nowrap; overflow: hidden;
+        }
+
+        footer { font-size: 0.7rem; color: #7f8c8d; flex-shrink: 0; white-space: nowrap; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>阿郎陪你運動趣</h1>
+        <h2 id="dynamic-subtitle">⚽ 載入中...</h2>
+        <p style="font-size: 0.8rem; margin-top: 1px;">追蹤阿郎：<a href="https://youtube.com/@alanworkoutfun" target="_blank">訂閱頻道</a></p>
+    </header>
+
+    <div class="stats-container">
+        <div class="stat-box">本局得分<span id="session-score">0</span></div>
+        <div class="stat-box">被擋次數<span id="miss-count">0 / 10</span></div>
+        <div class="stat-box">難度等級<span id="speed-level">Lv.1</span></div>
+        <div class="stat-box">總點閱數<span id="global-views">0</span></div>
+    </div>
+
+    <div id="game-stage">
+        <div id="goal"></div>
+        <div id="gk-container">
+            <div id="gk-emoji">🧑‍🎤</div>
+            <div id="gk-name">內馬爾</div>
+        </div>
+        <div id="aim-line"></div>
+        <div id="message">GOAL !!!</div>
+        <div id="football">⚽</div>
+    </div>
+
+    <div class="controls">
+        <div class="slider-container">
+            <span>⬅️ 左</span>
+            <input type="range" id="angle-slider" min="24" max="76" value="50" oninput="updateAimLine()">
+            <span>右 ➡️</span>
+        </div>
+        <button class="kick-btn" id="action-btn" onclick="kickBall()">確認射門 🚀</button>
+    </div>
+
+    <div class="leaderboard" id="leaderboard-view">🏆 榮譽榜：載入中...</div>
+
+    <footer>
+        &copy; 2026 阿郎陪你運動趣. All Rights Reserved.
+    </footer>
+
+    <script>
+        const subtitles = [
+            "⚽ 內馬爾在草地上滾了！快瞄準空檔射門！",
+            "⚽ 梅西拿了大力神盃，阿郎在等你的世界波！",
+            "⚽ 姆巴佩開啟神速防守！每得10分他會變更巨大！",
+            "⚽ 複製C羅招牌SIUUU進球！拉桿左右開弓吧！"
+        ];
+        document.getElementById('dynamic-subtitle').innerText = subtitles[Math.floor(Math.random() * subtitles.length)];
+
+        // 移除名字旁的圖示
+        const characters = [
+            { name: "內馬爾", emoji: "🧑‍🎤" },
+            { name: "梅西", emoji: "🧔" },
+            { name: "C羅", emoji: "🏃‍♂️" },
+            { name: "姆巴佩", emoji: "👶" },
+            { name: "哈蘭德", emoji: "👱‍♂️" }
+        ];
+
+        const taunts = [
+            "😏 這球是在傳球給阿郎嗎？", "🤪 差得有點遠，瞄準好再踢！", "🤫 節奏被我看透了，加油好嗎？",
+            "🥱 我閉著眼都能擋下來！", "😜 差太遠了吧，瞄準好嗎？", "🤔 有點威脅，但還不夠！",
+            "⚡ 梅西：「直到比賽結束前，都要不斷戰鬥！」", "🏆 C羅：「你的愛讓我強大，你的恨讓我不可阻擋！」",
+            "🔥 阿郎：「沒關係！調整好角度，下一球絕對進！」", "✨ 內馬爾：「努力直到你的偶像成為你的對手！」",
+            "💪 「好球！只差一點點就破網了！」", "🌟 「熱身結束了，拿出你真正的實力吧！」"
+        ];
+
+        // 音效系統
+        let audioCtx = null;
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            initAudio();
+            if (!audioCtx) return;
+
+            const osc = audioCtx.createOscillator(); 
+            const gain = audioCtx.createGain();
+            osc.connect(gain); 
+            gain.connect(audioCtx.destination);
+            
+            if (type === 'kick') {
+                osc.type = 'triangle'; 
+                osc.frequency.setValueAtTime(160, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime); 
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'goal') {
+                osc.type = 'sine'; 
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08);
+                osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.16);
+                gain.gain.setValueAtTime(0.4, audioCtx.currentTime); 
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+            } else if (type === 'save') {
+                osc.type = 'sawtooth'; 
+                osc.frequency.setValueAtTime(90, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime); 
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.25);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+            }
+        }
+
+        // 點閱數
+        let currentViews = localStorage.getItem('global_page_views') || 3450;
+        currentViews = parseInt(currentViews) + 1; localStorage.setItem('global_page_views', currentViews);
+        document.getElementById('global-views').innerText = currentViews.toLocaleString();
+
+        // 核心變數
+        let score = 0; let misses = 0; const maxMisses = 10;
+        let isKicking = false; let isGkFrozen = false;
+        let gkLeftPercent = 50; let gkDirection = 1;
+        let baseSpeed = 1.8; let speedLevel = 1; let catchRadius = 5.2; let sizeMultiplier = 1;
+
+        const ball = document.getElementById('football'); const gkContainer = document.getElementById('gk-container');
+        const gkEmoji = document.getElementById('gk-emoji'); const gkName = document.getElementById('gk-name');
+        const message = document.getElementById('message'); const scoreDisplay = document.getElementById('session-score');
+        const missDisplay = document.getElementById('miss-count'); const speedDisplay = document.getElementById('speed-level');
+        const slider = document.getElementById('angle-slider'); const aimLine = document.getElementById('aim-line');
+        const actionBtn = document.getElementById('action-btn');
+
+        function updateAimLine() {
+            initAudio();
+            if (isKicking) return;
+            aimLine.style.transform = `rotate(${(slider.value - 50) * 1.2}deg)`;
+        }
+        updateAimLine();
+
+        // 守門員 AI
+        setInterval(() => {
+            if (isGkFrozen || misses >= maxMisses) return;
+            if (speedLevel >= 3 && Math.random() < 0.07) gkDirection = Math.random() > 0.5 ? 1 : -1;
+            let randomSpeed = baseSpeed * (0.8 + Math.random() * 0.5);
+            gkLeftPercent += gkDirection * randomSpeed;
+            if (gkLeftPercent >= 74) { gkLeftPercent = 74; gkDirection = -1; }
+            if (gkLeftPercent <= 26) { gkLeftPercent = 26; gkDirection = 1; }
+            gkContainer.style.left = gkLeftPercent + '%';
+        }, 45);
+
+        function changeGK() {
+            const randomChar = characters[Math.floor(Math.random() * characters.length)];
+            gkEmoji.innerText = randomChar.emoji; gkName.innerText = randomChar.name;
+        }
+        changeGK();
+
+        // 排行榜更新
+        function updateLeaderboardView() {
+            let board = JSON.parse(localStorage.getItem('football_leaderboard')) || [
+                {name: "阿郎", score: 15}, {name: "梅西", score: 10}, {name: "C羅", score: 5}
+            ];
+            document.getElementById('leaderboard-view').innerText = `🏆 前三名：1. ${board[0].name}(${board[0].score}分) | 2. ${board[1].name}(${board[1].score}分) | 3. ${board[2].name}(${board[2].score}分)`;
+        }
+        updateLeaderboardView();
+
+        function checkLeaderboard(finalScore) {
+            let board = JSON.parse(localStorage.getItem('football_leaderboard')) || [
+                {name: "阿郎", score: 15}, {name: "梅西", score: 10}, {name: "C羅", score: 5}
+            ];
+            if (finalScore > board[2].score) {
+                setTimeout(() => {
+                    let name = prompt(`🎉 恭喜榮登前三名！請留下一行大名(限5字)：`);
+                    if (name === null || name.trim() === "") {
+                        return; 
+                    }
+                    name = name.trim().substring(0, 5);
+                    board.push({name: name, score: finalScore});
+                    board.sort((a, b) => b.score - a.score);
+                    board = board.slice(0, 3);
+                    localStorage.setItem('football_leaderboard', JSON.stringify(board));
+                    updateLeaderboardView();
+                }, 500);
+            }
+        }
+
+        // 射門邏輯
+        function kickBall() {
+            if (isKicking || misses >= maxMisses) return;
+            isKicking = true; aimLine.style.display = 'none';
+            playSound('kick');
+
+            const targetX = parseFloat(slider.value);
+            ball.style.bottom = '82%'; ball.style.left = targetX + '%';
+            
+            setTimeout(() => {
+                isGkFrozen = true;
+                
+                let dynamicRadius = catchRadius;
+                if (speedLevel >= 6) {
+                    dynamicRadius += (Math.random() * 3 - 1.5);
+                }
+
+                const distance = Math.abs(targetX - gkLeftPercent);
+
+                if (distance < dynamicRadius) {
+                    // 沒進球（被撲出）
+                    misses++;
+                    missDisplay.innerText = `${misses} / 10`;
+                    playSound('save');
+                    
+                    const randomTaunt = taunts[Math.floor(Math.random() * taunts.length)];
+                    message.innerText = randomTaunt;
+                    message.style.color = "#e74c3c";
+
+                    ball.style.bottom = '55%'; ball.style.left = (targetX + (targetX > gkLeftPercent ? 10 : -10)) + '%';
+                    setTimeout(() => { changeGK(); }, 400);
+                } else {
+                    // 進球成功
+                    score++; scoreDisplay.innerText = score;
+                    playSound('goal');
+                    message.innerText = "⚽ GOAL!!! 進球成功！"; message.style.color = "#f1c40f";
+
+                    if (score % 5 === 0) { 
+                        catchRadius += 0.8; 
+                        sizeMultiplier += 0.12; 
+                        gkEmoji.style.fontSize = (30 * sizeMultiplier) + 'px'; 
+                    }
+                    if (score % 10 === 0) { 
+                        speedLevel++; 
+                        baseSpeed += 1.3; 
+                        speedDisplay.innerText = "Lv." + speedLevel; 
+                    }
+                }
+                
+                message.style.display = 'block';
+
+                setTimeout(() => {
+                    message.style.display = 'none';
+                    if (misses >= maxMisses) {
+                        message.innerText = `🏁 遊戲結束！總得分：${score}`;
+                        message.style.color = "#f1c40f";
+                        message.style.display = 'block';
+                        actionBtn.innerText = "重新開始 🔄";
+                        actionBtn.onclick = () => { location.reload(); };
+                        checkLeaderboard(score);
+                    } else {
+                        ball.style.bottom = '15px'; ball.style.left = '50%';
+                        aimLine.style.display = 'block'; updateAimLine();
+                        isGkFrozen = false; isKicking = false;
+                    }
+                }, 1200); // 稍微拉長提示停留時間，方便閱讀折行名言
+            }, 300);
+        }
+    </script>
+</body>
+</html>
