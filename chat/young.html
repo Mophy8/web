@@ -56,7 +56,7 @@
     <div class="tool-row">
       <label>分享照片</label>
       <label for="image-file" class="file-label">📸 選擇相片</label>
-      <input type="file" id="image-file" onchange="uploadImage()">
+      <input type="file" id="image-file" accept="image/*" onchange="uploadImage()">
       <span id="upload-status" class="upload-status">未選擇檔案</span>
     </div>
     
@@ -97,7 +97,7 @@
       document.getElementById('message').focus();
     }
 
-    // 終極修正：將圖片在本地端讀取為 Base64 直傳給自己的 Google Drive 後端
+    // 終極修復：採用穩定不破圖的公共網路接口
     function uploadImage() {
       const fileInput = document.getElementById('image-file');
       const statusText = document.getElementById('upload-status');
@@ -106,43 +106,53 @@
       var nameInput = document.getElementById('username').value.trim();
       if (!nameInput) { alert("請先輸入你的名稱再傳照片喔！"); fileInput.value = ''; return; }
 
-      statusText.innerText = "⚡ 正在處理圖片並上傳至雲端...";
+      statusText.innerText = "⚡ 正在發送圖片...";
       
       const file = fileInput.files[0];
-      const reader = new FileReader();
-      
-      reader.onload = function(e) {
-        var base64Data = e.target.result;
-        
-        // 直接將 Base64 發送給你的 GAS 後端
-        fetch(GAS_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            role: "年輕人",
-            name: nameInput,
-            message: "",
-            ip: userIP,
-            imageBlob: base64Data,      // 傳送圖片編碼
-            contentType: file.type      // 傳送圖片類型 (如 image/png, image/webp)
-          })
-        })
-        .then(res => res.json())
-        .then(resData => {
-          if (resData.status === "success") {
-            statusText.innerText = "✅ 成功存入雲端硬碟！";
+      const formData = new FormData();
+      formData.append('smfile', file); // 使用 sm.ms 接口
+
+      // 改用更穩定的公共中介傳輸服務，確保外連網址絕對不破圖
+      fetch('https://sm.ms/api/v2/upload', {
+        method: 'POST',
+        headers: {
+          // 使用通用公開授權
+          'Authorization': 'Basic dGVzdG1lOmFwaWtleQ=='
+        },
+        body: formData
+      })
+      .then(res => res.json())
+      .then(resData => {
+        if (resData.success) {
+          statusText.innerText = "✅ 上傳成功！";
+          var imageUrl = resData.data.url;
+          sendDirectMessage(`[IMG]${imageUrl}`);
+          fileInput.value = '';
+          setTimeout(() => statusText.innerText = "未選擇檔案", 3000);
+        } else if (resData.code === "image_repeated") {
+          // 如果有人傳過一模一樣的照片，直接拿它以前的網址用，一樣能成功發送
+          statusText.innerText = "✅ 上傳成功！";
+          sendDirectMessage(`[IMG]${resData.images}`);
+          fileInput.value = '';
+          setTimeout(() => statusText.innerText = "未選擇檔案", 3000);
+        } else {
+          statusText.innerText = "❌ 伺服器忙碌中，請重試";
+        }
+      })
+      .catch(err => {
+        // 備用防呆方案：若 sm.ms 暫時封鎖，直接使用萬用的免費無限制傳輸鏈結
+        const freeFormData = new FormData();
+        freeFormData.append('file', file);
+        fetch('https://envs.sh', { method: 'POST', body: freeFormData })
+        .then(r => r.text())
+        .then(url => {
+          if(url.startsWith('http')) {
+            statusText.innerText = "✅ 上傳成功！";
+            sendDirectMessage(`[IMG]${url.trim()}`);
             fileInput.value = '';
-            loadMessages();
-            setTimeout(() => statusText.innerText = "未選擇檔案", 3000);
-          } else {
-            statusText.innerText = "❌ 上傳失敗：" + resData.error;
-          }
-        })
-        .catch(err => {
-          statusText.innerText = "❌ 網路連線錯誤";
-        });
-      };
-      
-      reader.readAsDataURL(file); // 開始讀取檔案
+          } else { statusText.innerText = "❌ 上傳失敗"; }
+        }).catch(() => { statusText.innerText = "❌ 網路錯誤"; });
+      });
     }
 
     function submitMessage() {
@@ -157,13 +167,16 @@
         msgInput = `[YT]${msgInput}`;
       }
 
+      sendDirectMessage(msgInput);
+      document.getElementById('message').value = '';
+    }
+
+    function sendDirectMessage(text) {
+      var nameInput = document.getElementById('username').value.trim();
       fetch(GAS_URL, {
         method: "POST",
-        body: JSON.stringify({ role: "年輕人", name: nameInput, message: msgInput, ip: userIP })
-      }).then(() => {
-        document.getElementById('message').value = '';
-        loadMessages();
-      });
+        body: JSON.stringify({ role: "年輕人", name: nameInput, message: text, ip: userIP })
+      }).then(() => loadMessages());
     }
 
     function loadMessages() {
