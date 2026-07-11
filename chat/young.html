@@ -8,9 +8,15 @@
     body { font-family: Arial, sans-serif; margin: 20px; font-size: 16px; background-color: #fff5ee; }
     h2 { text-align: center; }
     .input-group { margin-bottom: 15px; }
-    input[type="text"] { padding: 10px; width: 80%; max-width: 300px; font-size: 16px; }
-    button { padding: 10px 20px; font-size: 16px; background-color: #ff7f50; color: white; border: none; cursor: pointer; border-radius: 5px; }
-    #chat-box { border: 1px solid #ccc; background: white; padding: 15px; height: 450px; overflow-y: auto; margin-top: 20px; border-radius: 5px; }
+    input[type="text"] { padding: 10px; width: 75%; max-width: 300px; font-size: 16px; }
+    button.send-btn { padding: 10px 20px; font-size: 16px; background-color: #ff7f50; color: white; border: none; cursor: pointer; border-radius: 5px; }
+    
+    /* 貼圖區樣式 */
+    .emoji-picker { margin: 10px 0; background: #fff0e6; padding: 10px; border-radius: 5px; display: inline-block; }
+    .emoji-btn { font-size: 24px; background: none; border: none; cursor: pointer; margin: 0 5px; }
+    .emoji-btn:hover { transform: scale(1.2); }
+
+    #chat-box { border: 1px solid #ccc; background: white; padding: 15px; height: 400px; overflow-y: auto; margin-top: 20px; border-radius: 5px; }
     .msg-item { padding: 8px 0; border-bottom: 1px solid #eee; line-height: 1.4; }
     .msg-time { color: #999; font-size: 12px; margin-right: 5px; }
     .msg-elder { color: #0056b3; font-weight: bold; }
@@ -29,7 +35,17 @@
   <div class="input-group">
     <label>發送內容：</label>
     <input type="text" id="message" placeholder="輸入想說的話...">
-    <button onclick="submitMessage()">送出</button>
+    <button class="send-btn" onclick="submitMessage()">送出</button>
+  </div>
+
+  <div class="emoji-picker">
+    <span>常用貼圖：</span>
+    <button class="emoji-btn" onclick="appendEmoji('👍')">👍</button>
+    <button class="emoji-btn" onclick="appendEmoji('❤️')">❤️</button>
+    <button class="emoji-btn" onclick="appendEmoji('😂')">😂</button>
+    <button class="emoji-btn" onclick="appendEmoji('🙏')">🙏</button>
+    <button class="emoji-btn" onclick="appendEmoji('🎉')">🎉</button>
+    <button class="emoji-btn" onclick="appendEmoji('✨')">✨</button>
   </div>
 
   <div id="chat-box">載入對話中...</div>
@@ -39,13 +55,11 @@
     let userIP = "未知 IP";
 
     window.onload = async function() {
-      // 讀取快取名稱
       var savedName = localStorage.getItem('young_name');
       if (savedName) {
         document.getElementById('username').value = savedName;
       }
 
-      // 抓取精準公網 IP
       try {
         let res = await fetch('https://api.ipify.org?format=json');
         let data = await res.json();
@@ -55,6 +69,12 @@
       loadMessages();
       setInterval(loadMessages, 4000);
     };
+
+    // 點擊貼圖時，將貼圖塞入輸入框中
+    function appendEmoji(emoji) {
+      document.getElementById('message').value += emoji;
+      document.getElementById('message').focus();
+    }
 
     function submitMessage() {
       var nameInput = document.getElementById('username').value.trim();
