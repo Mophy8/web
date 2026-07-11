@@ -26,9 +26,15 @@
     .msg-elder { color: #0056b3; font-weight: bold; }
     .msg-young { color: #d9534f; font-weight: bold; }
 
-    .elder-img { max-width: 85%; max-height: 200px; border-radius: 8px; margin-top: 6px; display: block; border: 2px solid #ddd; }
+    /* 調整對話框內縮圖樣式，提示可點擊 */
+    .elder-img { max-width: 85%; max-height: 200px; border-radius: 8px; margin-top: 6px; display: block; border: 2px solid #ddd; cursor: zoom-in; }
     .elder-yt-btn { display: inline-block; background-color: #ff0000; color: white !important; text-decoration: none; padding: 14px 24px; border-radius: 8px; font-size: 22px; font-weight: bold; margin-top: 8px; text-align: center; box-shadow: 0 3px 6px rgba(0,0,0,0.15); }
     .elder-yt-btn:active { background-color: #cc0000; }
+
+    /* ✨ 全螢幕圖片放大燈箱效果 */
+    .image-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); align-items: center; justify-content: center; }
+    .modal-content { max-width: 95%; max-height: 90vh; border-radius: 4px; box-shadow: 0 4px 12px rgba(217, 83, 79, 0.2); }
+    .close-modal { position: absolute; top: 20px; right: 25px; color: #fff; font-size: 40px; font-weight: bold; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -48,6 +54,11 @@
 
   <div id="chat-box">載入對話中...</div>
 
+  <div id="imgModal" class="image-modal" onclick="closeImage()">
+    <span class="close-modal">&times;</span>
+    <img class="modal-content" id="modalTargetImg">
+  </div>
+
   <script>
     // ⚠️ 請記得替換為你真實的 GAS 網址
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzfE5zSvOVB0ppoS65Uq7k9AJMC6KmRSmnAO0_tP-3TScCeWgofvKWhPDUj85-Tpu8/exec";
@@ -65,6 +76,15 @@
       loadMessages();
       setInterval(loadMessages, 4000);
     };
+
+    // ✨ 放大與關閉圖片的控制邏輯
+    function zoomImage(src) {
+      document.getElementById("imgModal").style.display = "flex";
+      document.getElementById("modalTargetImg").src = src;
+    }
+    function closeImage() {
+      document.getElementById("imgModal").style.display = "none";
+    }
 
     function loadPhrases() {
       fetch(`${GAS_URL}?action=getPhrases`)
@@ -97,10 +117,10 @@
             var cls = msg.role === '長輩' ? 'msg-elder' : 'msg-young';
             var displayText = msg.text;
 
-            // 支援全新的內嵌解碼方式
             if (displayText.startsWith('[B64IMG]')) {
               var base64Data = displayText.replace('[B64IMG]', '').trim();
-              displayText = `<br><img class="elder-img" src="${base64Data}">`;
+              // 點選觸發 zoomImage
+              displayText = `<br><img class="elder-img" src="${base64Data}" onclick="zoomImage('${base64Data}')">`;
             } else if (displayText.startsWith('[YT]')) {
               var url = displayText.replace('[YT]', '').trim();
               displayText = `<br><a class="elder-yt-btn" href="${url}" target="_blank">📺 按這裡看影片</a>`;
