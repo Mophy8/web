@@ -11,34 +11,27 @@
     
     .config-card { background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 12px; }
     .input-group { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .input-group:last-child { margin-bottom: 0; }
     label { font-weight: bold; color: #666; min-width: 70px; font-size: 14px; }
     input[type="text"] { flex-grow: 1; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; }
     
-    /* 工具列（上傳、影片、貼圖） */
     .tools-container { background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 12px; }
     .tool-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
     
-    /* 美化上傳按鈕 */
     .file-label { background-color: #3498db; color: white; padding: 8px 12px; font-size: 14px; border-radius: 4px; cursor: pointer; font-weight: bold; display: inline-block; }
     #image-file { display: none; }
     .upload-status { font-size: 12px; color: #7f8c8d; }
 
-    button.action-btn { padding: 8px 12px; font-size: 14px; background-color: #e67e22; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; }
     button.send-btn { padding: 8px 20px; font-size: 15px; background-color: #ff7f50; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; width: 100%; margin-top: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     
     .emoji-picker { display: flex; gap: 10px; align-items: center; }
-    .emoji-btn { font-size: 24px; background: none; border: none; cursor: pointer; padding: 0; transition: transform 0.1s; }
-    .emoji-btn:hover { transform: scale(1.2); }
+    .emoji-btn { font-size: 24px; background: none; border: none; cursor: pointer; padding: 0; }
 
-    /* 對話框紀錄 */
     #chat-box { border: 1px solid #ddd; background: white; padding: 12px; flex-grow: 1; overflow-y: auto; border-radius: 8px; margin-top: 5px; }
     .msg-item { padding: 8px 0; border-bottom: 1px solid #f5f5f5; line-height: 1.5; font-size: 15px; }
     .msg-time { color: #bbb; font-size: 11px; margin-right: 5px; }
     .msg-elder { color: #0056b3; font-weight: bold; }
     .msg-young { color: #d9534f; font-weight: bold; }
     
-    /* 紀錄內部的圖片與影片樣式 */
     .chat-img { max-width: 150px; max-height: 150px; border-radius: 6px; margin-top: 5px; display: block; border: 1px solid #ddd; }
     .chat-yt-link { display: inline-block; background: #ff0000; color: white !important; padding: 4px 8px; border-radius: 4px; font-size: 12px; text-decoration: none; font-weight: bold; margin-top: 5px; }
   </style>
@@ -71,7 +64,7 @@
       <label>常用貼圖</label>
       <div class="emoji-picker">
         <button class="emoji-btn" onclick="appendEmoji('👍')">👍</button>
-        <button class="emoji-btn" onclick="appendEmoji('❤️') font-size:24px;">❤️</button>
+        <button class="emoji-btn" onclick="appendEmoji('❤️')">❤️</button>
         <button class="emoji-btn" onclick="appendEmoji('😂')">😂</button>
         <button class="emoji-btn" onclick="appendEmoji('🙏')">🙏</button>
       </div>
@@ -82,7 +75,7 @@
 
   <script>
     // ⚠️ 請記得替換為你真實的 GAS 網址
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzfE5zSvOVB0ppoS65Uq7k9AJMC6KmRSmnAO0_tP-3TScCeWgofvKWhPDUj85-Tpu8/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzfE5zSvOVB0ppoS65Uq7k9AJMC6KmRSmnAO0_tP-3TScCeWgofvKWhPDUj85-Tpu8/exec"; 
     let userIP = "未知 IP";
 
     window.onload = async function() {
@@ -93,7 +86,7 @@
         let res = await fetch('https://api.ipify.org?format=json');
         let data = await res.json();
         userIP = data.ip;
-      } catch (e) { console.log("無法獲切 IP"); }
+      } catch (e) { console.log("無法獲取 IP"); }
 
       loadMessages();
       setInterval(loadMessages, 4000);
@@ -104,42 +97,40 @@
       document.getElementById('message').focus();
     }
 
-    // 圖片上傳功能（使用匿名免金鑰的 Imgur API）
+    // 修正版：使用超穩定的 Telegraph 免費公共圖片接口
     function uploadImage() {
       const fileInput = document.getElementById('image-file');
       const statusText = document.getElementById('upload-status');
       if (!fileInput.files.length) return;
 
       var nameInput = document.getElementById('username').value.trim();
-      if (!nameInput) { alert("請先輸入你的名稱再傳照片喔！"); return; }
+      if (!nameInput) { alert("請先輸入你的名稱再傳照片喔！"); fileInput.value = ''; return; }
 
       statusText.innerText = "⚡ 正在上傳中...";
       
       const file = fileInput.files[0];
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append('file', file); // Telegraph 接收欄位為 'file'
 
-      // 呼叫 Imgur 匿名上傳
-      fetch('https://api.imgur.com/3/image', {
+      fetch('https://telegra.ph/upload', {
         method: 'POST',
-        headers: { Authorization: 'Client-ID 546c25a59c58ad7' }, // 內建通用公共 ID
         body: formData
       })
       .then(res => res.json())
       .then(resData => {
-        if (resData.success) {
+        // Telegraph 成功會回傳一個包含對象的陣列，如 [{src: "/file/xxx.jpg"}]
+        if (resData && resData[0] && resData[0].src) {
           statusText.innerText = "✅ 上傳成功！";
-          var imageUrl = resData.data.link;
-          // 直接將圖片網址作為訊息發送，特別標註 [IMG]
+          var imageUrl = 'https://telegra.ph' + resData[0].src;
           sendDirectMessage(`[IMG]${imageUrl}`);
-          fileInput.value = ''; // 清空選擇器
+          fileInput.value = '';
           setTimeout(() => statusText.innerText = "未選擇檔案", 3000);
         } else {
-          statusText.innerText = "❌ 上傳失敗，請再試一次";
+          statusText.innerText = "❌ 上傳失敗，請重試";
         }
       })
       .catch(err => {
-        statusText.innerText = "❌ 網路錯誤";
+        statusText.innerText = "❌ 網路錯誤或檔案過大";
       });
     }
 
@@ -150,8 +141,9 @@
       if (!nameInput || !msgInput) { alert("名字和內容不能留空喔！"); return; }
       localStorage.setItem('young_name', nameInput);
 
-      // 自動檢查是否為 YouTube 網址，如果是，加上 [YT] 標籤方便阿公端識別
-      if (msgInput.includes('youtube.com/watch') || msgInput.includes('youtu.be/')) {
+      // 修正版：加強 YouTube 網址關鍵字判定（不分大小寫、全面相容 youtu.be 與 youtube.com）
+      var lowerMsg = msgInput.toLowerCase();
+      if (lowerMsg.includes('youtube.com/watch') || lowerMsg.includes('youtu.be/')) {
         msgInput = `[YT]${msgInput}`;
       }
 
@@ -178,7 +170,6 @@
             var cls = msg.role === '長輩' ? 'msg-elder' : 'msg-young';
             var displayText = msg.text;
             
-            // 青年端預覽渲染
             if (displayText.startsWith('[IMG]')) {
               var url = displayText.replace('[IMG]', '');
               displayText = `<img class="chat-img" src="${url}">`;
