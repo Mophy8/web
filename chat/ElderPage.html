@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>阿公阿嬤聊天室</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f0f8ff; font-size: 24px; }
+    h2 { color: #333; text-align: center; font-size: 32px; }
+    .btn-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+    .phrase-btn { background-color: #4CAF50; color: white; border: none; padding: 20px; font-size: 26px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+    .phrase-btn:active { background-color: #3e8e41; }
+    #chat-box { border: 2px solid #ccc; background: white; padding: 15px; height: 400px; overflow-y: auto; border-radius: 8px; }
+    .msg-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 22px; line-height: 1.5; }
+    .msg-time { color: #999; font-size: 16px; margin-right: 5px; }
+    .msg-elder { color: #0056b3; font-weight: bold; }
+    .msg-young { color: #d9534f; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h2>阿公阿嬤聊天室 💬</h2>
+  
+  <div class="btn-container">
+    <button class="phrase-btn" onclick="sendPhrase('吃飽了')">🍚 吃飽了</button>
+    <button class="phrase-btn" onclick="sendPhrase('早安')">☀️ 早安</button>
+    <button class="phrase-btn" onclick="sendPhrase('在忙嗎')">📱 在忙嗎</button>
+    <button class="phrase-btn" onclick="sendPhrase('想你們了')">❤️ 想你們了</button>
+    <button class="phrase-btn" onclick="sendPhrase('哈哈大笑')">😆 哈哈</button>
+    <button class="phrase-btn" onclick="sendPhrase('晚安')">🌙 晚安</button>
+  </div>
+
+  <div id="chat-box">載入對話中...</div>
+
+  <script>
+    const GAS_URL = "請換成你剛剛複製的GAS網址";
+    const myName = "長輩";
+    let userIP = "未知 IP";
+
+    // 頁面載入時先抓取精準的本地公網 IP
+    window.onload = async function() {
+      try {
+        let res = await fetch('https://api.ipify.org?format=json');
+        let data = await res.json();
+        userIP = data.ip;
+      } catch (e) { console.log("無法獲取 IP"); }
+      
+      loadMessages();
+      setInterval(loadMessages, 4000);
+    };
+
+    function sendPhrase(text) {
+      fetch(GAS_URL, {
+        method: "POST",
+        body: JSON.stringify({ role: "長輩", name: myName, message: text, ip: userIP })
+      }).then(() => loadMessages());
+    }
+
+    function loadMessages() {
+      fetch(GAS_URL)
+        .then(res => res.json())
+        .then(messages => {
+          var chatBox = document.getElementById('chat-box');
+          if (!messages || messages.length === 0) {
+            chatBox.innerHTML = '目前沒有對話紀錄。';
+            return;
+          }
+          chatBox.innerHTML = '';
+          messages.forEach(function(msg) {
+            var cls = msg.role === '長輩' ? 'msg-elder' : 'msg-young';
+            chatBox.innerHTML += `<div class="msg-item"><span class="msg-time">${msg.time}</span> <span class="${cls}">[${msg.name}]:</span> ${msg.text}</div>`;
+          });
+        });
+    }
+  </script>
+</body>
+</html>
