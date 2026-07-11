@@ -27,8 +27,6 @@
     .msg-young { color: #d9534f; font-weight: bold; }
 
     .elder-img { max-width: 85%; max-height: 200px; border-radius: 8px; margin-top: 6px; display: block; border: 2px solid #ddd; }
-    
-    /* 確保超大按鈕明顯好按 */
     .elder-yt-btn { display: inline-block; background-color: #ff0000; color: white !important; text-decoration: none; padding: 14px 24px; border-radius: 8px; font-size: 22px; font-weight: bold; margin-top: 8px; text-align: center; box-shadow: 0 3px 6px rgba(0,0,0,0.15); }
     .elder-yt-btn:active { background-color: #cc0000; }
   </style>
@@ -99,15 +97,14 @@
             var cls = msg.role === '長輩' ? 'msg-elder' : 'msg-young';
             var displayText = msg.text;
 
-            // 修正版：加強解碼判斷，徹底拔除標籤，防堵特殊網址參數造成匹配失效
-            if (displayText.startsWith('[IMG]')) {
-              var url = displayText.replace('[IMG]', '').trim();
-              displayText = `<br><img class="elder-img" src="${url}" onclick="window.open('${url}')">`;
+            // 支援全新的內嵌解碼方式
+            if (displayText.startsWith('[B64IMG]')) {
+              var base64Data = displayText.replace('[B64IMG]', '').trim();
+              displayText = `<br><img class="elder-img" src="${base64Data}">`;
             } else if (displayText.startsWith('[YT]')) {
               var url = displayText.replace('[YT]', '').trim();
               displayText = `<br><a class="elder-yt-btn" href="${url}" target="_blank">📺 按這裡看影片</a>`;
             } else if (displayText.toLowerCase().includes('youtube.com/watch') || displayText.toLowerCase().includes('youtu.be/')) {
-              // 備用防呆：若青年端漏加標籤但內容是 YouTube 網址，依然強制轉成大按鈕
               displayText = `<br><a class="elder-yt-btn" href="${displayText.trim()}" target="_blank">📺 按這裡看影片</a>`;
             }
 
