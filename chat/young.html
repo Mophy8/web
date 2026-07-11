@@ -56,7 +56,7 @@
     <div class="tool-row">
       <label>分享照片</label>
       <label for="image-file" class="file-label">📸 選擇相片</label>
-      <input type="file" id="image-file" accept="image/*" onchange="uploadImage()">
+      <input type="file" id="image-file" onchange="uploadImage()">
       <span id="upload-status" class="upload-status">未選擇檔案</span>
     </div>
     
@@ -97,7 +97,7 @@
       document.getElementById('message').focus();
     }
 
-    // 修正版：使用超穩定的 Telegraph 免費公共圖片接口
+    // 終極修正：將圖片在本地端讀取為 Base64 直傳給自己的 Google Drive 後端
     function uploadImage() {
       const fileInput = document.getElementById('image-file');
       const statusText = document.getElementById('upload-status');
@@ -106,32 +106,43 @@
       var nameInput = document.getElementById('username').value.trim();
       if (!nameInput) { alert("請先輸入你的名稱再傳照片喔！"); fileInput.value = ''; return; }
 
-      statusText.innerText = "⚡ 正在上傳中...";
+      statusText.innerText = "⚡ 正在處理圖片並上傳至雲端...";
       
       const file = fileInput.files[0];
-      const formData = new FormData();
-      formData.append('file', file); // Telegraph 接收欄位為 'file'
-
-      fetch('https://telegra.ph/upload', {
-        method: 'POST',
-        body: formData
-      })
-      .then(res => res.json())
-      .then(resData => {
-        // Telegraph 成功會回傳一個包含對象的陣列，如 [{src: "/file/xxx.jpg"}]
-        if (resData && resData[0] && resData[0].src) {
-          statusText.innerText = "✅ 上傳成功！";
-          var imageUrl = 'https://telegra.ph' + resData[0].src;
-          sendDirectMessage(`[IMG]${imageUrl}`);
-          fileInput.value = '';
-          setTimeout(() => statusText.innerText = "未選擇檔案", 3000);
-        } else {
-          statusText.innerText = "❌ 上傳失敗，請重試";
-        }
-      })
-      .catch(err => {
-        statusText.innerText = "❌ 網路錯誤或檔案過大";
-      });
+      const reader = new FileReader();
+      
+      reader.onload = function(e) {
+        var base64Data = e.target.result;
+        
+        // 直接將 Base64 發送給你的 GAS 後端
+        fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            role: "年輕人",
+            name: nameInput,
+            message: "",
+            ip: userIP,
+            imageBlob: base64Data,      // 傳送圖片編碼
+            contentType: file.type      // 傳送圖片類型 (如 image/png, image/webp)
+          })
+        })
+        .then(res => res.json())
+        .then(resData => {
+          if (resData.status === "success") {
+            statusText.innerText = "✅ 成功存入雲端硬碟！";
+            fileInput.value = '';
+            loadMessages();
+            setTimeout(() => statusText.innerText = "未選擇檔案", 3000);
+          } else {
+            statusText.innerText = "❌ 上傳失敗：" + resData.error;
+          }
+        })
+        .catch(err => {
+          statusText.innerText = "❌ 網路連線錯誤";
+        });
+      };
+      
+      reader.readAsDataURL(file); // 開始讀取檔案
     }
 
     function submitMessage() {
@@ -141,22 +152,18 @@
       if (!nameInput || !msgInput) { alert("名字和內容不能留空喔！"); return; }
       localStorage.setItem('young_name', nameInput);
 
-      // 修正版：加強 YouTube 網址關鍵字判定（不分大小寫、全面相容 youtu.be 與 youtube.com）
       var lowerMsg = msgInput.toLowerCase();
       if (lowerMsg.includes('youtube.com/watch') || lowerMsg.includes('youtu.be/')) {
         msgInput = `[YT]${msgInput}`;
       }
 
-      sendDirectMessage(msgInput);
-      document.getElementById('message').value = '';
-    }
-
-    function sendDirectMessage(text) {
-      var nameInput = document.getElementById('username').value.trim();
       fetch(GAS_URL, {
         method: "POST",
-        body: JSON.stringify({ role: "年輕人", name: nameInput, message: text, ip: userIP })
-      }).then(() => loadMessages());
+        body: JSON.stringify({ role: "年輕人", name: nameInput, message: msgInput, ip: userIP })
+      }).then(() => {
+        document.getElementById('message').value = '';
+        loadMessages();
+      });
     }
 
     function loadMessages() {
