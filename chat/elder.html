@@ -26,11 +26,10 @@
     .msg-elder { color: #0056b3; font-weight: bold; }
     .msg-young { color: #d9534f; font-weight: bold; }
 
-    /* 長輩端照片大圖顯示 */
     .elder-img { max-width: 85%; max-height: 200px; border-radius: 8px; margin-top: 6px; display: block; border: 2px solid #ddd; }
     
-    /* 超大 YouTube 影片按鈕，方便阿公點擊 */
-    .elder-yt-btn { display: inline-block; background-color: #ff0000; color: white !important; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-top: 8px; text-align: center; box-shadow: 0 3px 6px rgba(0,0,0,0.15); }
+    /* 確保超大按鈕明顯好按 */
+    .elder-yt-btn { display: inline-block; background-color: #ff0000; color: white !important; text-decoration: none; padding: 14px 24px; border-radius: 8px; font-size: 22px; font-weight: bold; margin-top: 8px; text-align: center; box-shadow: 0 3px 6px rgba(0,0,0,0.15); }
     .elder-yt-btn:active { background-color: #cc0000; }
   </style>
 </head>
@@ -52,6 +51,7 @@
   <div id="chat-box">載入對話中...</div>
 
   <script>
+    // ⚠️ 請記得替換為你真實的 GAS 網址
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzfE5zSvOVB0ppoS65Uq7k9AJMC6KmRSmnAO0_tP-3TScCeWgofvKWhPDUj85-Tpu8/exec";
     const myName = "澎湖阿公";
     let userIP = "未知 IP";
@@ -99,13 +99,16 @@
             var cls = msg.role === '長輩' ? 'msg-elder' : 'msg-young';
             var displayText = msg.text;
 
-            // 長輩端畫面解碼與美化
+            // 修正版：加強解碼判斷，徹底拔除標籤，防堵特殊網址參數造成匹配失效
             if (displayText.startsWith('[IMG]')) {
-              var url = displayText.replace('[IMG]', '');
+              var url = displayText.replace('[IMG]', '').trim();
               displayText = `<br><img class="elder-img" src="${url}" onclick="window.open('${url}')">`;
             } else if (displayText.startsWith('[YT]')) {
-              var url = displayText.replace('[YT]', '');
+              var url = displayText.replace('[YT]', '').trim();
               displayText = `<br><a class="elder-yt-btn" href="${url}" target="_blank">📺 按這裡看影片</a>`;
+            } else if (displayText.toLowerCase().includes('youtube.com/watch') || displayText.toLowerCase().includes('youtu.be/')) {
+              // 備用防呆：若青年端漏加標籤但內容是 YouTube 網址，依然強制轉成大按鈕
+              displayText = `<br><a class="elder-yt-btn" href="${displayText.trim()}" target="_blank">📺 按這裡看影片</a>`;
             }
 
             chatBox.innerHTML += `<div class="msg-item"><span class="msg-time">${msg.time}</span> <span class="${cls}">[${msg.name}]:</span> ${displayText}</div>`;
