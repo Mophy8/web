@@ -1,99 +1,170 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>青年端對話視窗</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; font-size: 16px; background-color: #fff5ee; }
-    h2 { text-align: center; }
-    .input-group { margin-bottom: 15px; }
-    input[type="text"] { padding: 10px; width: 75%; max-width: 300px; font-size: 16px; }
-    button.send-btn { padding: 10px 20px; font-size: 16px; background-color: #ff7f50; color: white; border: none; cursor: pointer; border-radius: 5px; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; margin: 0; padding: 15px; background-color: #fff5ee; height: 100vh; display: flex; flex-direction: column; }
+    h2 { text-align: center; margin: 5px 0; color: #333; }
     
-    /* 貼圖區樣式 */
-    .emoji-picker { margin: 10px 0; background: #fff0e6; padding: 10px; border-radius: 5px; display: inline-block; }
-    .emoji-btn { font-size: 24px; background: none; border: none; cursor: pointer; margin: 0 5px; }
+    .config-card { background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 12px; }
+    .input-group { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .input-group:last-child { margin-bottom: 0; }
+    label { font-weight: bold; color: #666; min-width: 70px; font-size: 14px; }
+    input[type="text"] { flex-grow: 1; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; }
+    
+    /* 工具列（上傳、影片、貼圖） */
+    .tools-container { background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 12px; }
+    .tool-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+    
+    /* 美化上傳按鈕 */
+    .file-label { background-color: #3498db; color: white; padding: 8px 12px; font-size: 14px; border-radius: 4px; cursor: pointer; font-weight: bold; display: inline-block; }
+    #image-file { display: none; }
+    .upload-status { font-size: 12px; color: #7f8c8d; }
+
+    button.action-btn { padding: 8px 12px; font-size: 14px; background-color: #e67e22; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; }
+    button.send-btn { padding: 8px 20px; font-size: 15px; background-color: #ff7f50; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; width: 100%; margin-top: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    
+    .emoji-picker { display: flex; gap: 10px; align-items: center; }
+    .emoji-btn { font-size: 24px; background: none; border: none; cursor: pointer; padding: 0; transition: transform 0.1s; }
     .emoji-btn:hover { transform: scale(1.2); }
 
-    #chat-box { border: 1px solid #ccc; background: white; padding: 15px; height: 400px; overflow-y: auto; margin-top: 20px; border-radius: 5px; }
-    .msg-item { padding: 8px 0; border-bottom: 1px solid #eee; line-height: 1.4; }
-    .msg-time { color: #999; font-size: 12px; margin-right: 5px; }
+    /* 對話框紀錄 */
+    #chat-box { border: 1px solid #ddd; background: white; padding: 12px; flex-grow: 1; overflow-y: auto; border-radius: 8px; margin-top: 5px; }
+    .msg-item { padding: 8px 0; border-bottom: 1px solid #f5f5f5; line-height: 1.5; font-size: 15px; }
+    .msg-time { color: #bbb; font-size: 11px; margin-right: 5px; }
     .msg-elder { color: #0056b3; font-weight: bold; }
     .msg-young { color: #d9534f; font-weight: bold; }
+    
+    /* 紀錄內部的圖片與影片樣式 */
+    .chat-img { max-width: 150px; max-height: 150px; border-radius: 6px; margin-top: 5px; display: block; border: 1px solid #ddd; }
+    .chat-yt-link { display: inline-block; background: #ff0000; color: white !important; padding: 4px 8px; border-radius: 4px; font-size: 12px; text-decoration: none; font-weight: bold; margin-top: 5px; }
   </style>
 </head>
 <body>
 
-  <h2>青年端對話視窗</h2>
+  <h2>青年端對話視窗 📱</h2>
   
-  <div class="input-group">
-    <label>你的名稱：</label>
-    <input type="text" id="username" placeholder="輸入名稱後會自動儲存">
-  </div>
-  
-  <div class="input-group">
-    <label>發送內容：</label>
-    <input type="text" id="message" placeholder="輸入想說的話...">
-    <button class="send-btn" onclick="submitMessage()">送出</button>
+  <div class="config-card">
+    <div class="input-group">
+      <label>你的名稱</label>
+      <input type="text" id="username" placeholder="輸入後自動儲存...">
+    </div>
+    <div class="input-group">
+      <label>發送內容</label>
+      <input type="text" id="message" placeholder="輸入想說的話、或貼上 YouTube 網址...">
+    </div>
+    <button class="send-btn" onclick="submitMessage()">發送訊息</button>
   </div>
 
-  <div class="emoji-picker">
-    <span>常用貼圖：</span>
-    <button class="emoji-btn" onclick="appendEmoji('👍')">👍</button>
-    <button class="emoji-btn" onclick="appendEmoji('❤️')">❤️</button>
-    <button class="emoji-btn" onclick="appendEmoji('😂')">😂</button>
-    <button class="emoji-btn" onclick="appendEmoji('🙏')">🙏</button>
-    <button class="emoji-btn" onclick="appendEmoji('🎉')">🎉</button>
-    <button class="emoji-btn" onclick="appendEmoji('✨')">✨</button>
+  <div class="tools-container">
+    <div class="tool-row">
+      <label>分享照片</label>
+      <label for="image-file" class="file-label">📸 選擇相片</label>
+      <input type="file" id="image-file" accept="image/*" onchange="uploadImage()">
+      <span id="upload-status" class="upload-status">未選擇檔案</span>
+    </div>
+    
+    <div class="tool-row">
+      <label>常用貼圖</label>
+      <div class="emoji-picker">
+        <button class="emoji-btn" onclick="appendEmoji('👍')">👍</button>
+        <button class="emoji-btn" onclick="appendEmoji('❤️') font-size:24px;">❤️</button>
+        <button class="emoji-btn" onclick="appendEmoji('😂')">😂</button>
+        <button class="emoji-btn" onclick="appendEmoji('🙏')">🙏</button>
+      </div>
+    </div>
   </div>
 
   <div id="chat-box">載入對話中...</div>
 
   <script>
+    // ⚠️ 請記得替換為你真實的 GAS 網址
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzfE5zSvOVB0ppoS65Uq7k9AJMC6KmRSmnAO0_tP-3TScCeWgofvKWhPDUj85-Tpu8/exec";
     let userIP = "未知 IP";
 
     window.onload = async function() {
       var savedName = localStorage.getItem('young_name');
-      if (savedName) {
-        document.getElementById('username').value = savedName;
-      }
+      if (savedName) document.getElementById('username').value = savedName;
 
       try {
         let res = await fetch('https://api.ipify.org?format=json');
         let data = await res.json();
         userIP = data.ip;
-      } catch (e) { console.log("無法獲取 IP"); }
+      } catch (e) { console.log("無法獲切 IP"); }
 
       loadMessages();
       setInterval(loadMessages, 4000);
     };
 
-    // 點擊貼圖時，將貼圖塞入輸入框中
     function appendEmoji(emoji) {
       document.getElementById('message').value += emoji;
       document.getElementById('message').focus();
+    }
+
+    // 圖片上傳功能（使用匿名免金鑰的 Imgur API）
+    function uploadImage() {
+      const fileInput = document.getElementById('image-file');
+      const statusText = document.getElementById('upload-status');
+      if (!fileInput.files.length) return;
+
+      var nameInput = document.getElementById('username').value.trim();
+      if (!nameInput) { alert("請先輸入你的名稱再傳照片喔！"); return; }
+
+      statusText.innerText = "⚡ 正在上傳中...";
+      
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append('image', file);
+
+      // 呼叫 Imgur 匿名上傳
+      fetch('https://api.imgur.com/3/image', {
+        method: 'POST',
+        headers: { Authorization: 'Client-ID 546c25a59c58ad7' }, // 內建通用公共 ID
+        body: formData
+      })
+      .then(res => res.json())
+      .then(resData => {
+        if (resData.success) {
+          statusText.innerText = "✅ 上傳成功！";
+          var imageUrl = resData.data.link;
+          // 直接將圖片網址作為訊息發送，特別標註 [IMG]
+          sendDirectMessage(`[IMG]${imageUrl}`);
+          fileInput.value = ''; // 清空選擇器
+          setTimeout(() => statusText.innerText = "未選擇檔案", 3000);
+        } else {
+          statusText.innerText = "❌ 上傳失敗，請再試一次";
+        }
+      })
+      .catch(err => {
+        statusText.innerText = "❌ 網路錯誤";
+      });
     }
 
     function submitMessage() {
       var nameInput = document.getElementById('username').value.trim();
       var msgInput = document.getElementById('message').value.trim();
       
-      if (!nameInput || !msgInput) {
-        alert("名字和內容不能留空喔！");
-        return;
-      }
-
+      if (!nameInput || !msgInput) { alert("名字和內容不能留空喔！"); return; }
       localStorage.setItem('young_name', nameInput);
 
+      // 自動檢查是否為 YouTube 網址，如果是，加上 [YT] 標籤方便阿公端識別
+      if (msgInput.includes('youtube.com/watch') || msgInput.includes('youtu.be/')) {
+        msgInput = `[YT]${msgInput}`;
+      }
+
+      sendDirectMessage(msgInput);
+      document.getElementById('message').value = '';
+    }
+
+    function sendDirectMessage(text) {
+      var nameInput = document.getElementById('username').value.trim();
       fetch(GAS_URL, {
         method: "POST",
-        body: JSON.stringify({ role: "年輕人", name: nameInput, message: msgInput, ip: userIP })
-      }).then(() => {
-        document.getElementById('message').value = '';
-        loadMessages();
-      });
+        body: JSON.stringify({ role: "年輕人", name: nameInput, message: text, ip: userIP })
+      }).then(() => loadMessages());
     }
 
     function loadMessages() {
@@ -101,14 +172,22 @@
         .then(res => res.json())
         .then(messages => {
           var chatBox = document.getElementById('chat-box');
-          if (!messages || messages.length === 0) {
-            chatBox.innerHTML = '目前沒有對話紀錄。';
-            return;
-          }
+          if (!messages || messages.length === 0) { chatBox.innerHTML = '目前沒有對話紀錄。'; return; }
           chatBox.innerHTML = '';
           messages.forEach(function(msg) {
             var cls = msg.role === '長輩' ? 'msg-elder' : 'msg-young';
-            chatBox.innerHTML += `<div class="msg-item"><span class="msg-time">${msg.time}</span> <span class="${cls}">[${msg.name}]:</span> ${msg.text}</div>`;
+            var displayText = msg.text;
+            
+            // 青年端預覽渲染
+            if (displayText.startsWith('[IMG]')) {
+              var url = displayText.replace('[IMG]', '');
+              displayText = `<img class="chat-img" src="${url}">`;
+            } else if (displayText.startsWith('[YT]')) {
+              var url = displayText.replace('[YT]', '');
+              displayText = `<a class="chat-yt-link" href="${url}" target="_blank">📺 點擊觀看 YouTube 影片</a>`;
+            }
+
+            chatBox.innerHTML += `<div class="msg-item"><span class="msg-time">${msg.time}</span> <span class="${cls}">[${msg.name}]:</span> ${displayText}</div>`;
           });
         });
     }
