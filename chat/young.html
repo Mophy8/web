@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>青年端對話視窗</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; font-size: 16px; background-color: #fff5ee; }
+    h2 { text-align: center; }
+    .input-group { margin-bottom: 15px; }
+    input[type="text"] { padding: 10px; width: 80%; max-width: 300px; font-size: 16px; }
+    button { padding: 10px 20px; font-size: 16px; background-color: #ff7f50; color: white; border: none; cursor: pointer; border-radius: 5px; }
+    #chat-box { border: 1px solid #ccc; background: white; padding: 15px; height: 450px; overflow-y: auto; margin-top: 20px; border-radius: 5px; }
+    .msg-item { padding: 8px 0; border-bottom: 1px solid #eee; line-height: 1.4; }
+    .msg-time { color: #999; font-size: 12px; margin-right: 5px; }
+    .msg-elder { color: #0056b3; font-weight: bold; }
+    .msg-young { color: #d9534f; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h2>青年端對話視窗</h2>
+  
+  <div class="input-group">
+    <label>你的名稱：</label>
+    <input type="text" id="username" placeholder="輸入名稱後會自動儲存">
+  </div>
+  
+  <div class="input-group">
+    <label>發送內容：</label>
+    <input type="text" id="message" placeholder="輸入想說的話...">
+    <button onclick="submitMessage()">送出</button>
+  </div>
+
+  <div id="chat-box">載入對話中...</div>
+
+  <script>
+    const GAS_URL = "請換成你剛剛複製的GAS網址";
+    let userIP = "未知 IP";
+
+    window.onload = async function() {
+      // 讀取快取名稱
+      var savedName = localStorage.getItem('young_name');
+      if (savedName) {
+        document.getElementById('username').value = savedName;
+      }
+
+      // 抓取精準公網 IP
+      try {
+        let res = await fetch('https://api.ipify.org?format=json');
+        let data = await res.json();
+        userIP = data.ip;
+      } catch (e) { console.log("無法獲取 IP"); }
+
+      loadMessages();
+      setInterval(loadMessages, 4000);
+    };
+
+    function submitMessage() {
+      var nameInput = document.getElementById('username').value.trim();
+      var msgInput = document.getElementById('message').value.trim();
+      
+      if (!nameInput || !msgInput) {
+        alert("名字和內容不能留空喔！");
+        return;
+      }
+
+      localStorage.setItem('young_name', nameInput);
+
+      fetch(GAS_URL, {
+        method: "POST",
+        body: JSON.stringify({ role: "年輕人", name: nameInput, message: msgInput, ip: userIP })
+      }).then(() => {
+        document.getElementById('message').value = '';
+        loadMessages();
+      });
+    }
+
+    function loadMessages() {
+      fetch(GAS_URL)
+        .then(res => res.json())
+        .then(messages => {
+          var chatBox = document.getElementById('chat-box');
+          if (!messages || messages.length === 0) {
+            chatBox.innerHTML = '目前沒有對話紀錄。';
+            return;
+          }
+          chatBox.innerHTML = '';
+          messages.forEach(function(msg) {
+            var cls = msg.role === '長輩' ? 'msg-elder' : 'msg-young';
+            chatBox.innerHTML += `<div class="msg-item"><span class="msg-time">${msg.time}</span> <span class="${cls}">[${msg.name}]:</span> ${msg.text}</div>`;
+          });
+        });
+    }
+  </script>
+</body>
+</html>
