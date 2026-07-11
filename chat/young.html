@@ -56,7 +56,7 @@
     <div class="tool-row">
       <label>分享照片</label>
       <label for="image-file" class="file-label">📸 選擇相片</label>
-      <input type="file" id="image-file" accept="image/*" onchange="uploadImage()">
+      <input type="file" id="image-file" accept="image/*" onchange="processAndUploadImage()">
       <span id="upload-status" class="upload-status">未選擇檔案</span>
     </div>
     
@@ -97,8 +97,8 @@
       document.getElementById('message').focus();
     }
 
-    // 終極修復：採用穩定不破圖的公共網路接口
-    function uploadImage() {
+    // 讀取圖片並進行智慧壓縮，防止資料量過大
+    function processAndUploadImage() {
       const fileInput = document.getElementById('image-file');
       const statusText = document.getElementById('upload-status');
       if (!fileInput.files.length) return;
@@ -106,53 +106,60 @@
       var nameInput = document.getElementById('username').value.trim();
       if (!nameInput) { alert("請先輸入你的名稱再傳照片喔！"); fileInput.value = ''; return; }
 
-      statusText.innerText = "⚡ 正在發送圖片...";
-      
+      statusText.innerText = "⚡ 正在壓縮並發送圖片...";
       const file = fileInput.files[0];
-      const formData = new FormData();
-      formData.append('smfile', file); // 使用 sm.ms 接口
+      const reader = new FileReader();
 
-      // 改用更穩定的公共中介傳輸服務，確保外連網址絕對不破圖
-      fetch('https://sm.ms/api/v2/upload', {
-        method: 'POST',
-        headers: {
-          // 使用通用公開授權
-          'Authorization': 'Basic dGVzdG1lOmFwaWtleQ=='
-        },
-        body: formData
-      })
-      .then(res => res.json())
-      .then(resData => {
-        if (resData.success) {
-          statusText.innerText = "✅ 上傳成功！";
-          var imageUrl = resData.data.url;
-          sendDirectMessage(`[IMG]${imageUrl}`);
-          fileInput.value = '';
-          setTimeout(() => statusText.innerText = "未選擇檔案", 3000);
-        } else if (resData.code === "image_repeated") {
-          // 如果有人傳過一模一樣的照片，直接拿它以前的網址用，一樣能成功發送
-          statusText.innerText = "✅ 上傳成功！";
-          sendDirectMessage(`[IMG]${resData.images}`);
-          fileInput.value = '';
-          setTimeout(() => statusText.innerText = "未選擇檔案", 3000);
-        } else {
-          statusText.innerText = "❌ 伺服器忙碌中，請重試";
-        }
-      })
-      .catch(err => {
-        // 備用防呆方案：若 sm.ms 暫時封鎖，直接使用萬用的免費無限制傳輸鏈結
-        const freeFormData = new FormData();
-        freeFormData.append('file', file);
-        fetch('https://envs.sh', { method: 'POST', body: freeFormData })
-        .then(r => r.text())
-        .then(url => {
-          if(url.startsWith('http')) {
-            statusText.innerText = "✅ 上傳成功！";
-            sendDirectMessage(`[IMG]${url.trim()}`);
-            fileInput.value = '';
-          } else { statusText.innerText = "❌ 上傳失敗"; }
-        }).catch(() => { statusText.innerText = "❌ 網路錯誤"; });
-      });
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          // 利用 Canvas 進行圖片尺寸縮放與品質壓縮
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const max_size = 600; // 最大寬高限制在 600 像素，極度適合手機觀看且體積小
+
+          if (width > height) {
+            if (width > max_size) { height *= max_size / width; width = max_size; }
+          } else {
+            if (height > max_size) { width *= max_size / height; height = max_size; }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // 轉化為標準的 JPEG 格式，並設定壓縮品質為 0.6
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+
+          // 直接打向 GAS，保證無網路錯誤
+          fetch(GAS_URL, {
+            method: "POST",
+            body: JSON.stringify({
+              role: "年輕人",
+              name: nameInput,
+              message: "",
+              ip: userIP,
+              imageBlob: compressedBase64
+            })
+          })
+          .then(res => res.json())
+          .then(resData => {
+            if (resData.status === "success") {
+              statusText.innerText = "✅ 成功發送照片！";
+              fileInput.value = '';
+              loadMessages();
+              setTimeout(() => statusText.innerText = "未選擇檔案", 3000);
+            } else {
+              statusText.innerText = "❌ 發送失敗，請重試";
+            }
+          })
+          .catch(() => { statusText.innerText = "❌ 網路連線錯誤"; });
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
     }
 
     function submitMessage() {
@@ -167,16 +174,13 @@
         msgInput = `[YT]${msgInput}`;
       }
 
-      sendDirectMessage(msgInput);
-      document.getElementById('message').value = '';
-    }
-
-    function sendDirectMessage(text) {
-      var nameInput = document.getElementById('username').value.trim();
       fetch(GAS_URL, {
         method: "POST",
-        body: JSON.stringify({ role: "年輕人", name: nameInput, message: text, ip: userIP })
-      }).then(() => loadMessages());
+        body: JSON.stringify({ role: "年輕人", name: nameInput, message: msgInput, ip: userIP })
+      }).then(() => {
+        document.getElementById('message').value = '';
+        loadMessages();
+      });
     }
 
     function loadMessages() {
@@ -190,9 +194,9 @@
             var cls = msg.role === '長輩' ? 'msg-elder' : 'msg-young';
             var displayText = msg.text;
             
-            if (displayText.startsWith('[IMG]')) {
-              var url = displayText.replace('[IMG]', '');
-              displayText = `<img class="chat-img" src="${url}">`;
+            if (displayText.startsWith('[B64IMG]')) {
+              var base64Data = displayText.replace('[B64IMG]', '');
+              displayText = `<img class="chat-img" src="${base64Data}">`;
             } else if (displayText.startsWith('[YT]')) {
               var url = displayText.replace('[YT]', '');
               displayText = `<a class="chat-yt-link" href="${url}" target="_blank">📺 點擊觀看 YouTube 影片</a>`;
