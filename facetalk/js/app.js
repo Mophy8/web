@@ -242,12 +242,27 @@ img.onload=function()
 uploadImage=img;
 
 
+// 顯示圖片預覽
+
+const preview =
+document.getElementById("preview");
+
+
+preview.src =
+img.src;
+
+
+preview.style.display="block";
+
+
+
+// 更新狀態
 
 document
 .getElementById("status")
 .innerHTML=
 
-"圖片載入完成，等待建立3D人物";
+"✅ 圖片載入完成，等待建立3D人物";
 
 
 
