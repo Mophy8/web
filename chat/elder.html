@@ -11,13 +11,16 @@
     .user-tag { text-align: center; color: #0056b3; font-weight: bold; margin-bottom: 10px; font-size: 18px; }
     
     .btn-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
-    .phrase-btn { background-color: #4CAF50; color: white; border: none; padding: 14px 4px; font-size: 5.5vw; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .phrase-btn { background-color: #4CAF50; color: white; border: none; padding: 14px 4px; font-size: 5.5vw; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s; }
     @media (min-width: 480px) { .phrase-btn { font-size: 20px; } }
     .phrase-btn:active { background-color: #3e8e41; }
     
+    /* ✨ 新增：按鈕停用（被鎖定）時的樣式，變灰色並移除陰影，讓阿公一眼看出不能按 */
+    .phrase-btn:disabled, .emoji-btn:disabled { background-color: #cccccc !important; color: #666666 !important; opacity: 0.6; cursor: not-allowed; box-shadow: none; transform: none; }
+
     .emoji-container { background: #e6f2ff; padding: 8px; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-around; }
     .emoji-title { font-size: 15px; color: #555; font-weight: bold; }
-    .emoji-btn { font-size: 32px; background: none; border: none; cursor: pointer; padding: 0 5px; }
+    .emoji-btn { font-size: 32px; background: none; border: none; cursor: pointer; padding: 0 5px; transition: all 0.2s; border-radius: 6px; }
     .emoji-btn:active { transform: scale(1.3); }
 
     #chat-box { border: 2px solid #ccc; background: white; padding: 10px; flex-grow: 1; overflow-y: auto; border-radius: 8px; margin-bottom: 5px; }
@@ -35,14 +38,11 @@
     .yt-play-icon::after { content: ''; display: block; width: 0; height: 0; border-style: solid; border-width: 10px 0 10px 18px; border-color: transparent transparent transparent white; margin-left: 4px; }
     .yt-thumb-container:active { transform: scale(0.98); }
 
-    /* 全螢幕燈箱效果（支援圖片與影片） */
+    /* 全螢幕燈箱效果 */
     .image-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); align-items: center; justify-content: center; }
     .modal-content { max-width: 95%; max-height: 90vh; border-radius: 4px; display: none; }
-    
-    /* ✨ 新增：內嵌影片播放器的響應式外框 */
     .modal-video-container { width: 95%; max-width: 640px; aspect-ratio: 16 / 9; display: none; background: #000; }
     .modal-video-container iframe { width: 100%; height: 100%; border: none; }
-    
     .close-modal { position: absolute; top: 20px; right: 25px; color: #fff; font-size: 40px; font-weight: bold; cursor: pointer; z-index: 10000; }
   </style>
 </head>
@@ -55,10 +55,10 @@
 
   <div class="emoji-container">
     <div class="emoji-title">大貼圖：</div>
-    <button class="emoji-btn" onclick="sendPhrase('👍')">👍</button>
-    <button class="emoji-btn" onclick="sendPhrase('❤️')">❤️</button>
-    <button class="emoji-btn" onclick="sendPhrase('😂')">😂</button>
-    <button class="emoji-btn" onclick="sendPhrase('🙏')">🙏</button>
+    <button class="emoji-btn" onclick="sendPhrase(this, '👍')">👍</button>
+    <button class="emoji-btn" onclick="sendPhrase(this, '❤️')">❤️</button>
+    <button class="emoji-btn" onclick="sendPhrase(this, '😂')">😂</button>
+    <button class="emoji-btn" onclick="sendPhrase(this, '🙏')">🙏</button>
   </div>
 
   <div id="chat-box">載入對話中...</div>
@@ -73,6 +73,7 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzfE5zSvOVB0ppoS65Uq7k9AJMC6KmRSmnAO0_tP-3TScCeWgofvKWhPDUj85-Tpu8/exec";
     const myName = "澎湖阿公";
     let userIP = "未知 IP";
+    let isSending = false; // ✨ 追蹤狀態：是否正在傳送中
 
     window.onload = async function() {
       try {
@@ -86,7 +87,6 @@
       setInterval(loadMessages, 4000);
     };
 
-    // 點選圖片放大
     function zoomImage(src) {
       document.getElementById("imgModal").style.display = "flex";
       document.getElementById("modalTargetImg").style.display = "block";
@@ -94,24 +94,19 @@
       document.getElementById("modalTargetImg").src = src;
     }
 
-    // ✨ 新增：點選影片縮圖，原網頁全螢幕播放
     function zoomVideo(videoId) {
       document.getElementById("imgModal").style.display = "flex";
       document.getElementById("modalTargetImg").style.display = "none";
       const videoContainer = document.getElementById("modalVideoContainer");
       videoContainer.style.display = "block";
-      
-      // 自動播放 (autoplay=1) 與允許全螢幕控制
       videoContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
     }
 
-    // ✨ 關閉燈箱（點擊任意處觸發，同時銷毀影片以停止聲音）
     function closeModal() {
       document.getElementById("imgModal").style.display = "none";
-      document.getElementById("modalVideoContainer").innerHTML = ""; // 清空 iframe 停止播放
+      document.getElementById("modalVideoContainer").innerHTML = ""; 
     }
 
-    // 解析 YouTube 並輸出 HTML 區塊
     function getYoutubeTemplate(url) {
       let videoId = "";
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -121,7 +116,6 @@
       }
       if (videoId) {
         const thumbUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-        // ✨ 修改：移除 target="_blank" 網址跳轉，改由 onclick 觸發本頁全螢幕直接播放
         return `<br><div class="yt-thumb-container" onclick="zoomVideo('${videoId}')">
                   <img class="elder-yt-thumb" src="${thumbUrl}">
                   <div class="yt-play-icon"></div>
@@ -138,16 +132,49 @@
           if (!phrases || phrases.length === 0) { container.innerHTML = '未設定'; return; }
           container.innerHTML = '';
           phrases.slice(0, 6).forEach(text => {
-            container.innerHTML += `<button class="phrase-btn" onclick="sendPhrase('${text}')">${text}</button>`;
+            // ✨ 這裡將整個按鈕物件 (this) 傳入 sendPhrase
+            container.innerHTML += `<button class="phrase-btn" onclick="sendPhrase(this, '${text}')">${text}</button>`;
           });
         });
     }
 
-    function sendPhrase(text) {
+    // ✨ 新增核心防呆機制：傳送時鎖定所有按鈕
+    function setAllButtonsDisabled(disabledState) {
+      // 鎖定/解鎖所有常用詞按鈕
+      const phraseBtns = document.querySelectorAll('.phrase-btn');
+      phraseBtns.forEach(btn => btn.disabled = disabledState);
+      
+      // 鎖定/解鎖所有大貼圖按鈕
+      const emojiBtns = document.querySelectorAll('.emoji-btn');
+      emojiBtns.forEach(btn => btn.disabled = disabledState);
+    }
+
+    // ✨ 修改：加入 clickedBtn 參數，精準控制當前按鈕的文字提示
+    function sendPhrase(clickedBtn, text) {
+      // 防呆保護：如果已經在傳送中，直接攔截不反應
+      if (isSending) return;
+      
+      isSending = true;
+      setAllButtonsDisabled(true); // 鎖定畫面上所有的按鈕，變灰色
+
+      // 備份原本按鈕內的內容（字詞或貼圖），並把按鈕字改為「傳送中」
+      const originalHTML = clickedBtn.innerHTML;
+      if (!['👍','❤️','😂','🙏'].includes(text)) {
+        clickedBtn.innerText = "傳送中...";
+      }
+
       fetch(GAS_URL, {
         method: "POST",
         body: JSON.stringify({ role: "長輩", name: myName, message: text, ip: userIP })
-      }).then(() => loadMessages());
+      })
+      .then(() => loadMessages())
+      .catch(err => console.error("傳送失敗:", err))
+      .finally(() => {
+        // 傳送完畢後（無論成功或失敗）
+        clickedBtn.innerHTML = originalHTML; // 還原按鈕本來的字或貼圖
+        setAllButtonsDisabled(false);        // 解鎖所有按鈕，顏色恢復正常
+        isSending = false;                   // 解除鎖定狀態
+      });
     }
 
     function loadMessages() {
@@ -156,6 +183,10 @@
         .then(messages => {
           var chatBox = document.getElementById('chat-box');
           if (!messages || messages.length === 0) { chatBox.innerHTML = '目前沒有對話紀錄'; return; }
+          
+          // 如果阿公正在傳訊息，先不要刷新對話框，避免干擾網頁視覺
+          if (isSending) return;
+
           chatBox.innerHTML = '';
           messages.forEach(function(msg) {
             var cls = msg.role === '長輩' ? 'msg-elder' : 'msg-young';
