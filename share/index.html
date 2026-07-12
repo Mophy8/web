@@ -13,7 +13,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             margin: 0;
             padding: 12px;
@@ -43,7 +43,7 @@
         .thumbnail-wrapper {
             position: relative;
             width: 100%;
-            padding-top: 56.25%;
+            padding-top: 56.25%; /* 16:9 比例 */
             background-color: #E5E8E8;
         }
 
@@ -143,21 +143,25 @@
     </div>
 
     <script>
+        // ⚠️ 請替換成您在 GAS 部署得到的網頁應用程式網址
         const gasUrl = 'https://script.google.com/macros/s/AKfycbx5XgrI2Db7s1pBjiiFiKlOLlBVn_OImWAVPpbr3RRJhoW0-t4iQNzlFdBWtiSVRzQ/exec'; 
         let globalMediaData = [];
 
+        // 解析 YouTube 影片 ID
         function getYouTubeId(url) {
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const match = url.match(regExp);
             return (match && match[2].length === 11) ? match[2] : null;
         }
 
+        // 切換上傳欄位顯示
         function toggleInputFields() {
             const type = document.getElementById('uploadType').value;
             document.getElementById('imageGroup').style.display = type === 'image' ? 'block' : 'none';
             document.getElementById('videoGroup').style.display = type === 'video' ? 'block' : 'none';
         }
 
+        // 讀取試算表資料
         function fetchSheetData() {
             document.getElementById('loadingStatus').style.display = 'block';
             fetch(gasUrl)
@@ -166,10 +170,13 @@
                     globalMediaData = data;
                     document.getElementById('loadingStatus').style.display = 'none';
                     renderGallery();
+                })
+                .catch(err => {
+                    document.getElementById('loadingStatus').innerText = '讀取資料失敗，請確認 GAS 設定。';
                 });
         }
 
-        // 渲染畫面
+        // 將資料渲染到畫面上
         function renderGallery() {
             const container = document.getElementById('galleryContainer');
             container.innerHTML = '';
@@ -181,7 +188,7 @@
 
                 let src = item.type === 'video' 
                     ? `https://img.youtube.com/vi/${getYouTubeId(item.url)}/hqdefault.jpg`
-                    : item.url; // 直接使用原始網路圖片路徑
+                    : item.url; // 照片直接讀取您輸入的網路圖片路徑
                 
                 let playBtn = item.type === 'video' ? `<div class="play-btn">▶</div>` : '';
 
@@ -196,7 +203,7 @@
             });
         }
 
-        // 年輕人新增處理
+        // 年輕人點擊「確認送出」時觸發
         function handleUpload() {
             const type = document.getElementById('uploadType').value;
             const title = document.getElementById('uploadTitle').value.trim();
@@ -219,21 +226,48 @@
                 payload.videoUrl = videoUrl;
             }
 
-            // 發送給 GAS
-            fetch(gasUrl, { method: 'POST', body: JSON.stringify(payload) })
+            sendToGas(payload);
+        }
+
+        // 核心：發送請求給 GAS 並處理假網路錯誤機制
+        function sendToGas(payload) {
+            fetch(gasUrl, { 
+                method: 'POST', 
+                body: JSON.stringify(payload),
+                headers: {
+                    'Content-Type': 'text/plain' // 使用 text/plain 繞過瀏覽器的 Preflight 檢查
+                }
+            })
             .then(res => res.json())
             .then(res => {
                 if (res.status === 'success') {
                     alert('分享成功！已自動完成雲端備份！');
-                    document.getElementById('uploadTitle').value = '';
-                    document.getElementById('imageUrlInput').value = '';
-                    document.getElementById('videoUrlInput').value = '';
-                    fetchSheetData();
+                    clearForm();
+                    fetchSheetData(); // 重新載入列表
                 } else {
-                    alert('上傳失敗：' + res.message);
+                    alert('系統回報錯誤：' + res.message);
                 }
             })
-            .catch(err => alert('網路連線發生錯誤！'))
+            .catch(err => {
+                // 💡 關鍵解法：當 GAS 進行 302 跳轉時手機瀏覽器常會誤判為錯誤
+                // 我們在此處於 1.5 秒後主動向資料庫做二次驗證
+                console.log("正在重新驗證上傳狀態...");
+                setTimeout(() => {
+                    fetch(gasUrl)
+                        .then(res => res.json())
+                        .then(data => {
+                            // 檢查最新一筆資料的標題是否符合，符合即代表其實上傳成功了
+                            if (data.length > 0 && data[0].title === payload.title) {
+                                alert('分享成功！已自動完成雲端備份！');
+                                clearForm();
+                                globalMediaData = data; // 直接更新本地資料
+                                renderGallery(); // 重新渲染
+                            } else {
+                                alert('網路連線發生錯誤，請確認 GAS 部署網址是否正確，且開啟「任何人」權限！');
+                            }
+                        });
+                }, 1500);
+            })
             .finally(() => resetSubmitBtn());
         }
 
@@ -243,6 +277,13 @@
             submitBtn.innerText = '確認送出';
         }
 
+        function clearForm() {
+            document.getElementById('uploadTitle').value = '';
+            document.getElementById('imageUrlInput').value = '';
+            document.getElementById('videoUrlInput').value = '';
+        }
+
+        // 放大顯示燈箱
         function openLightbox(index) {
             const item = globalMediaData[index];
             const lightbox = document.getElementById('lightbox');
@@ -262,6 +303,7 @@
             document.getElementById('lightboxMedia').innerHTML = '';
         }
 
+        // 網頁載入時自動讀取試算表
         window.onload = fetchSheetData;
     </script>
 </body>
