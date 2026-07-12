@@ -26,12 +26,16 @@
     .msg-elder { color: #0056b3; font-weight: bold; }
     .msg-young { color: #d9534f; font-weight: bold; }
 
-    /* 調整對話框內縮圖樣式，提示可點擊 */
     .elder-img { max-width: 85%; max-height: 200px; border-radius: 8px; margin-top: 6px; display: block; border: 2px solid #ddd; cursor: zoom-in; }
-    .elder-yt-btn { display: inline-block; background-color: #ff0000; color: white !important; text-decoration: none; padding: 14px 24px; border-radius: 8px; font-size: 22px; font-weight: bold; margin-top: 8px; text-align: center; box-shadow: 0 3px 6px rgba(0,0,0,0.15); }
-    .elder-yt-btn:active { background-color: #cc0000; }
+    
+    /* ✨ 新增：YouTube 影片縮圖的樣式設計 */
+    .yt-thumb-container { display: inline-block; position: relative; margin-top: 8px; max-width: 85%; border: 2px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .elder-yt-thumb { width: 100%; max-height: 200px; display: block; object-fit: cover; }
+    /* 紅色播放圖示疊加在縮圖正中央，提示阿公可以點擊 */
+    .yt-play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 42px; background: rgba(255, 0, 0, 0.9); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+    .yt-play-icon::after { content: ''; display: block; width: 0; height: 0; border-style: solid; border-width: 10px 0 10px 18px; border-color: transparent transparent transparent white; margin-left: 4px; }
+    .yt-thumb-container:active { transform: scale(0.98); }
 
-    /* ✨ 全螢幕圖片放大燈箱效果 */
     .image-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); align-items: center; justify-content: center; }
     .modal-content { max-width: 95%; max-height: 90vh; border-radius: 4px; box-shadow: 0 4px 12px rgba(217, 83, 79, 0.2); }
     .close-modal { position: absolute; top: 20px; right: 25px; color: #fff; font-size: 40px; font-weight: bold; cursor: pointer; }
@@ -60,7 +64,6 @@
   </div>
 
   <script>
-    // ⚠️ 請記得替換為你真實的 GAS 網址
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzfE5zSvOVB0ppoS65Uq7k9AJMC6KmRSmnAO0_tP-3TScCeWgofvKWhPDUj85-Tpu8/exec";
     const myName = "澎湖阿公";
     let userIP = "未知 IP";
@@ -77,13 +80,32 @@
       setInterval(loadMessages, 4000);
     };
 
-    // ✨ 放大與關閉圖片的控制邏輯
     function zoomImage(src) {
       document.getElementById("imgModal").style.display = "flex";
       document.getElementById("modalTargetImg").src = src;
     }
     function closeImage() {
       document.getElementById("imgModal").style.display = "none";
+    }
+
+    // ✨ 用來自動解析 YouTube 影片 ID 並取得官方縮圖網址的工具函式
+    function getYoutubeTemplate(url) {
+      let videoId = "";
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = url.match(regExp);
+      if (match && match[2].length === 11) {
+        videoId = match[2];
+      }
+      if (videoId) {
+        // 使用 hqdefault 可以取得高品質的 4:3 畫面比例縮圖，非常清晰
+        const thumbUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+        return `<br><a class="yt-thumb-container" href="${url}" target="_blank">
+                  <img class="elder-yt-thumb" src="${thumbUrl}">
+                  <div class="yt-play-icon"></div>
+                </a>`;
+      }
+      // 如果解析失敗，則作為防呆還原成普通文字連結
+      return `<br><a href="${url}" target="_blank">🔗 觀看影片</a>`;
     }
 
     function loadPhrases() {
@@ -119,13 +141,12 @@
 
             if (displayText.startsWith('[B64IMG]')) {
               var base64Data = displayText.replace('[B64IMG]', '').trim();
-              // 點選觸發 zoomImage
               displayText = `<br><img class="elder-img" src="${base64Data}" onclick="zoomImage('${base64Data}')">`;
             } else if (displayText.startsWith('[YT]')) {
               var url = displayText.replace('[YT]', '').trim();
-              displayText = `<br><a class="elder-yt-btn" href="${url}" target="_blank">📺 按這裡看影片</a>`;
+              displayText = getYoutubeTemplate(url); // ✨ 套用縮圖模組
             } else if (displayText.toLowerCase().includes('youtube.com/watch') || displayText.toLowerCase().includes('youtu.be/')) {
-              displayText = `<br><a class="elder-yt-btn" href="${displayText.trim()}" target="_blank">📺 按這裡看影片</a>`;
+              displayText = getYoutubeTemplate(displayText.trim()); // ✨ 套用縮圖模組
             }
 
             chatBox.innerHTML += `<div class="msg-item"><span class="msg-time">${msg.time}</span> <span class="${cls}">[${msg.name}]:</span> ${displayText}</div>`;
