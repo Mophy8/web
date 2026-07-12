@@ -23,6 +23,18 @@
         header { text-align: center; padding: 15px 0 5px 0; }
         header h1 { font-size: 28px; margin: 0; }
         header p { font-size: 16px; color: #7F8C8D; margin: 5px 0; }
+        
+        /* 瀏覽次數顯示樣式 */
+        .view-count {
+            display: inline-block;
+            background: #E8F8F5;
+            color: #16A085;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
 
         .gallery-container {
             display: flex;
@@ -104,6 +116,7 @@
     <header>
         <h1>👴 我們的溫馨相簿 👵</h1>
         <p>往下滑看照片影片，點擊可以放大喔！</p>
+        <div id="viewCountBox" class="view-count" style="display: none;">👀 瀏覽次數：0 次</div>
     </header>
 
     <div id="loadingStatus" class="loading">正在找照片，請等一下下...</div>
@@ -144,15 +157,12 @@
         const gasUrl = 'https://script.google.com/macros/s/AKfycbx5XgrI2Db7s1pBjiiFiKlOLlBVn_OImWAVPpbr3RRJhoW0-t4iQNzlFdBWtiSVRzQ/exec'; 
         let globalMediaData = [];
 
-        // 【修正：加強版 YouTube ID 解析，支援 Shorts、一般影片與手機短網址】
         function getYouTubeId(url) {
             if (!url) return null;
-            // 處理 Shorts 格式
             if (url.includes('/shorts/')) {
                 const parts = url.split('/shorts/');
                 if (parts[1]) return parts[1].split('?')[0].split('&')[0];
             }
-            // 處理傳統 watch?v= 或手機 youtu.be/ 格式
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const match = url.match(regExp);
             return (match && match[2].length === 11) ? match[2] : null;
@@ -164,12 +174,20 @@
             document.getElementById('videoGroup').style.display = type === 'video' ? 'block' : 'none';
         }
 
+        // 修改：讀取試算表資料並同時更新瀏覽次數
         function fetchSheetData() {
             document.getElementById('loadingStatus').style.display = 'block';
             fetch(gasUrl)
                 .then(res => res.json())
-                .then(data => {
-                    globalMediaData = data;
+                .then(resData => {
+                    // 更新瀏覽次數顯示
+                    if (resData.viewCount !== undefined) {
+                        const countBox = document.getElementById('viewCountBox');
+                        countBox.innerText = `👀 瀏覽次數：${resData.viewCount} 次`;
+                        countBox.style.display = 'inline-block';
+                    }
+                    
+                    globalMediaData = resData.mediaList || [];
                     document.getElementById('loadingStatus').style.display = 'none';
                     renderGallery();
                 })
@@ -254,10 +272,15 @@
                 setTimeout(() => {
                     fetch(gasUrl)
                         .then(res => res.json())
-                        .then(data => {
+                        .then(resData => {
+                            const data = resData.mediaList || [];
                             if (data.length > 0 && data[0].title === payload.title) {
                                 alert('分享成功！已自動完成雲端備份！');
                                 clearForm();
+                                
+                                if (resData.viewCount !== undefined) {
+                                    document.getElementById('viewCountBox').innerText = `👀 瀏覽次數：${resData.viewCount} 次`;
+                                }
                                 globalMediaData = data;
                                 renderGallery();
                             } else {
@@ -290,7 +313,6 @@
             if (item.type === 'image') {
                 mediaBox.innerHTML = `<img src="${item.url}" class="lightbox-content">`;
             } else {
-                // 燈箱中若是 Shorts，將其轉為標準 embed 嵌入格式以利播放
                 const ytId = getYouTubeId(item.url);
                 mediaBox.innerHTML = `<iframe class="lightbox-content" width="100%" src="https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0" allow="autoplay" allowfullscreen></iframe>`;
             }
