@@ -2,398 +2,267 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>幸福家庭相簿展影</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>家族回憶相簿</title>
     <style>
         :root {
-            --primary-color: #4A90E2;
-            --bg-color: #F5F7FA;
+            --bg-color: #F4F6F9;
             --card-bg: #FFFFFF;
-            --text-main: #333333;
-            --elderly-font: 24px;
+            --text-color: #2C3E50;
+            --font-size-title: 22px;
         }
 
         body {
-            font-family: "Microsoft JhengHei", sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: var(--bg-color);
             margin: 0;
-            padding: 20px;
-            color: var(--text-main);
+            padding: 12px;
+            color: var(--text-color);
         }
 
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
+        header { text-align: center; padding: 15px 0 5px 0; }
+        header h1 { font-size: 28px; margin: 0; }
+        header p { font-size: 16px; color: #7F8C8D; margin: 5px 0; }
 
-        header h1 {
-            font-size: 40px;
-            color: #2C3E50;
-            margin-bottom: 10px;
-        }
-
-        /* 長輩友善的分類大按鈕 */
-        .filter-tabs {
+        /* 長輩瀏覽區 (同頁混排，瀑布流) */
+        .gallery-container {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .tab-btn {
-            font-size: var(--elderly-font);
-            font-weight: bold;
-            padding: 15px 40px;
-            border: 3px solid var(--primary-color);
-            border-radius: 50px;
-            background-color: white;
-            color: var(--primary-color);
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .tab-btn.active, .tab-btn:hover {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        /* 內容網格 */
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 25px;
-            max-width: 1200px;
-            margin: 0 auto 50px auto;
+            max-width: 500px;
+            margin: 0 auto 40px auto;
         }
 
         .media-card {
             background: var(--card-bg);
             border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-            cursor: pointer;
-            transition: transform 0.2s;
-            position: relative;
-        }
-
-        .media-card:hover {
-            transform: scale(1.03);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
 
         .thumbnail-wrapper {
             position: relative;
             width: 100%;
-            padding-top: 56.25%; /* 16:9 比例 */
-            background-color: #000;
+            padding-top: 56.25%;
+            background-color: #E5E8E8;
         }
 
         .thumbnail-wrapper img {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             object-fit: cover;
         }
 
-        /* 影片播放圖示標記 */
-        .play-badge {
-            position: absolute;
-            top: 50%;
-            left: 50%;
+        .play-btn {
+            position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            border-radius: 50%;
-            width: 70px;
-            height: 70px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 30px;
+            background: rgba(0, 0, 0, 0.75); color: white;
+            border-radius: 50%; width: 65px; height: 65px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; padding-left: 5px; box-sizing: border-box;
         }
 
         .media-title {
-            padding: 15px;
-            font-size: var(--elderly-font);
-            font-weight: bold;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            padding: 16px; font-size: var(--font-size-title);
+            font-weight: bold; line-height: 1.4; border-top: 1px solid #F2F4F4;
         }
 
-        /* 年輕人上傳區塊 (放在下方，樣式較小調) */
-        .upload-section {
-            max-width: 600px;
-            margin: 50px auto 20px auto;
+        .loading { text-align: center; font-size: 20px; color: #7F8C8D; padding: 30px 0; }
+
+        /* 年輕人新增區 */
+        .upload-box {
+            max-width: 500px;
+            margin: 20px auto;
             background: #EAECEE;
-            padding: 20px;
+            padding: 16px;
             border-radius: 12px;
-            border: 2px dashed #BDC3C7;
-        }
-
-        .upload-section h3 {
-            margin-top: 0;
-            color: #566573;
-        }
-
-        .form-group {
-            margin-bottom: 12px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 10px;
             box-sizing: border-box;
-            border: 1px solid #CCD1D1;
-            border-radius: 6px;
-            font-size: 16px;
         }
 
+        .upload-box h3 { margin-top: 0; color: #5D6D7E; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 10px; box-sizing: border-box;
+            border: 1px solid #CCD1D1; border-radius: 6px; font-size: 16px;
+        }
         .submit-btn {
-            background-color: #2ECC71;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: bold;
+            background-color: #2ECC71; color: white; border: none;
+            padding: 12px; font-size: 16px; border-radius: 6px;
+            cursor: pointer; width: 100%; font-weight: bold;
         }
 
-        /* 燈箱彈出視窗 (全螢幕觀看) */
+        /* 全螢幕燈箱 */
         .lightbox {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 999;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 9999; justify-content: center; align-items: center;
         }
-
-        .lightbox-content {
-            max-width: 90%;
-            max-height: 80%;
-            box-shadow: 0 0 20px rgba(255,255,255,0.2);
-        }
-
-        .lightbox-close {
-            position: absolute;
-            top: 20px;
-            right: 30px;
-            color: white;
-            font-size: 50px;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .lightbox-title {
-            color: white;
-            font-size: 28px;
-            margin-top: 20px;
-            text-align: center;
-        }
+        .lightbox-close { position: absolute; top: 15px; right: 20px; color: white; font-size: 45px; font-weight: bold; }
+        .lightbox-content { width: 100%; max-height: 100%; object-fit: contain; }
+        iframe.lightbox-content { aspect-ratio: 16 / 9; border: none; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>👴👵 家族回憶快展</h1>
-        <p style="font-size: 20px; color: #7F8C8D;">點擊下方按鈕，就能看照片或影片喔！</p>
+        <h1>👴 我們的溫馨相簿 👵</h1>
+        <p>往下滑看照片影片，點擊可以放大喔！</p>
     </header>
 
-    <div class="filter-tabs">
-        <button class="tab-btn active" onclick="filterMedia('all', this)">全部都看</button>
-        <button class="tab-btn" onclick="filterMedia('image', this)">只看照片</button>
-        <button class="tab-btn" onclick="filterMedia('video', this)">只看影片</button>
-    </div>
+    <div id="loadingStatus" class="loading">正在找照片，請等一下下...</div>
 
-    <div class="gallery-grid" id="galleryGrid">
-        </div>
+    <div class="gallery-container" id="galleryContainer"></div>
 
-    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-        <span class="lightbox-close">&times;</span>
-        <div id="lightboxMediaContainer" onclick="event.stopPropagation()">
-            </div>
-        <div class="lightbox-title" id="lightboxTitle"></div>
-    </div>
-
-    <hr style="border: 0; height: 1px; background: #BDC3C7; margin: 50px 0;">
-
-    <div class="upload-section">
-        <h3>🧑 年輕人分享區 (由此新增)</h3>
+    <div class="upload-box">
+        <h3>🧑 年輕人分享區</h3>
         <div class="form-group">
-            <label>類型：</label>
-            <select id="mediaType" onchange="toggleUrlLabel()">
-                <option value="image">照片</option>
-                <option value="video">YouTube 影片</option>
+            <label>分享類型：</label>
+            <select id="uploadType" onchange="toggleInputFields()">
+                <option value="image">📷 分享網路圖片連結 (自動備份)</option>
+                <option value="video">🎥 分享 YouTube 影片網址</option>
             </select>
         </div>
-        <div class="form-group">
-            <label id="urlLabel">照片網址：</label>
-            <input type="text" id="mediaUrl" placeholder="請輸入網址..." value="https://images.unsplash.com/photo-1506744038136-46273834b3fb">
+        <div class="form-group" id="imageGroup">
+            <label>圖片路徑 (網址)：</label>
+            <input type="text" id="imageUrlInput" placeholder="https://example.com/image.jpg">
+        </div>
+        <div class="form-group" id="videoGroup" style="display:none;">
+            <label>YouTube 網址：</label>
+            <input type="text" id="videoUrlInput" placeholder="https://www.youtube.com/watch?v=...">
         </div>
         <div class="form-group">
-            <label>標題說明（寫給長輩看的）：</label>
-            <input type="text" id="mediaTitle" placeholder="例如：孫子去公園玩">
+            <label>想對長輩說的話（標題）：</label>
+            <input type="text" id="uploadTitle" placeholder="例如：孫子今天吃大餐">
         </div>
-        <button class="submit-btn" onclick="addMediaItem()">送出分享</button>
+        <button class="submit-btn" id="submitBtn" onclick="handleUpload()">確認送出</button>
+    </div>
+
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <span class="lightbox-close">×</span>
+        <div id="lightboxMedia" style="width: 100%; display: flex; justify-content: center;" onclick="event.stopPropagation()"></div>
     </div>
 
     <script>
-        // 初始預設資料庫
-        let mediaData = [
-            {
-                type: 'image',
-                url: 'https://images.unsplash.com/photo-1472396961693-142e6e269027?w=600',
-                title: '美麗的風景照'
-            },
-            {
-                type: 'video',
-                url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // 範例影片
-                title: '大家一起來聽歌'
-            }
-        ];
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbx5XgrI2Db7s1pBjiiFiKlOLlBVn_OImWAVPpbr3RRJhoW0-t4iQNzlFdBWtiSVRzQ/exec'; 
+        let globalMediaData = [];
 
-        // 解析 YouTube ID 的精準正規表示式
         function getYouTubeId(url) {
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const match = url.match(regExp);
             return (match && match[2].length === 11) ? match[2] : null;
         }
 
-        // 切換輸入提示文字
-        function toggleUrlLabel() {
-            const type = document.getElementById('mediaType').value;
-            const label = document.getElementById('urlLabel');
-            const input = document.getElementById('mediaUrl');
-            
-            if (type === 'video') {
-                label.innerText = 'YouTube 影片網址：';
-                input.placeholder = 'https://www.youtube.com/watch?v=...';
-                input.value = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
-            } else {
-                label.innerText = '照片網址：';
-                input.placeholder = 'https://example.com/photo.jpg';
-                input.value = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600';
-            }
+        function toggleInputFields() {
+            const type = document.getElementById('uploadType').value;
+            document.getElementById('imageGroup').style.display = type === 'image' ? 'block' : 'none';
+            document.getElementById('videoGroup').style.display = type === 'video' ? 'block' : 'none';
+        }
+
+        function fetchSheetData() {
+            document.getElementById('loadingStatus').style.display = 'block';
+            fetch(gasUrl)
+                .then(res => res.json())
+                .then(data => {
+                    globalMediaData = data;
+                    document.getElementById('loadingStatus').style.display = 'none';
+                    renderGallery();
+                });
         }
 
         // 渲染畫面
-        function renderGallery(filter = 'all') {
-            const grid = document.getElementById('galleryGrid');
-            grid.innerHTML = '';
-
-            mediaData.forEach((item, index) => {
-                if (filter !== 'all' && item.type !== filter) return;
-
+        function renderGallery() {
+            const container = document.getElementById('galleryContainer');
+            container.innerHTML = '';
+            
+            globalMediaData.forEach((item, index) => {
                 const card = document.createElement('div');
                 card.className = 'media-card';
                 card.onclick = () => openLightbox(index);
 
-                let thumbnailSrc = item.url;
-                let playBadge = '';
-
-                // 如果是影片，自動抓取 YouTube 官方高畫質縮圖網址 (mqdefault 或 hqdefault)
-                if (item.type === 'video') {
-                    const ytId = getYouTubeId(item.url);
-                    thumbnailSrc = ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : 'https://via.placeholder.com/480x360?text=Invalid+Video';
-                    playBadge = `<div class="play-badge">▶</div>`;
-                }
+                let src = item.type === 'video' 
+                    ? `https://img.youtube.com/vi/${getYouTubeId(item.url)}/hqdefault.jpg`
+                    : item.url; // 直接使用原始網路圖片路徑
+                
+                let playBtn = item.type === 'video' ? `<div class="play-btn">▶</div>` : '';
 
                 card.innerHTML = `
                     <div class="thumbnail-wrapper">
-                        <img src="${thumbnailSrc}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/400x300?text=圖片載入失敗'">
-                        ${playBadge}
+                        <img src="${src}" loading="lazy" onerror="this.src='https://via.placeholder.com/400x225?text=圖片路徑失效'">
+                        ${playBtn}
                     </div>
                     <div class="media-title">${item.title}</div>
                 `;
-                grid.appendChild(card);
+                container.appendChild(card);
             });
         }
 
-        // 分類過濾
-        function filterMedia(type, btnElement) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            btnElement.classList.add('active');
-            renderGallery(type);
-        }
+        // 年輕人新增處理
+        function handleUpload() {
+            const type = document.getElementById('uploadType').value;
+            const title = document.getElementById('uploadTitle').value.trim();
+            const submitBtn = document.getElementById('submitBtn');
 
-        // 年輕人點擊新增資料
-        function addMediaItem() {
-            const type = document.getElementById('mediaType').value;
-            const url = document.getElementById('mediaUrl').value.trim();
-            const title = document.getElementById('mediaTitle').value.trim() || (type === 'image' ? '新照片' : '新影片');
+            if (!title) { alert('請輸入標題！'); return; }
 
-            if (!url) {
-                alert('請填入網址！');
-                return;
+            submitBtn.disabled = true;
+            submitBtn.innerText = '正在處理並備份中...';
+
+            let payload = { type: type, title: title };
+
+            if (type === 'image') {
+                const imageUrl = document.getElementById('imageUrlInput').value.trim();
+                if (!imageUrl) { alert('請輸入圖片路徑！'); resetSubmitBtn(); return; }
+                payload.imageUrl = imageUrl;
+            } else {
+                const videoUrl = document.getElementById('videoUrlInput').value.trim();
+                if (!getYouTubeId(videoUrl)) { alert('請輸入正確的 YouTube 網址！'); resetSubmitBtn(); return; }
+                payload.videoUrl = videoUrl;
             }
 
-            if (type === 'video' && !getYouTubeId(url)) {
-                alert('這似乎不是正確的 YouTube 網址喔！');
-                return;
-            }
-
-            // 新增至陣列最前端，讓最新的顯示在最前面
-            mediaData.unshift({ type, url, title });
-            
-            // 重置表單並刷新
-            document.getElementById('mediaTitle').value = '';
-            renderGallery();
-            alert('成功分享！快請長輩看～');
+            // 發送給 GAS
+            fetch(gasUrl, { method: 'POST', body: JSON.stringify(payload) })
+            .then(res => res.json())
+            .then(res => {
+                if (res.status === 'success') {
+                    alert('分享成功！已自動完成雲端備份！');
+                    document.getElementById('uploadTitle').value = '';
+                    document.getElementById('imageUrlInput').value = '';
+                    document.getElementById('videoUrlInput').value = '';
+                    fetchSheetData();
+                } else {
+                    alert('上傳失敗：' + res.message);
+                }
+            })
+            .catch(err => alert('網路連線發生錯誤！'))
+            .finally(() => resetSubmitBtn());
         }
 
-        // 打開大燈箱 (長輩看大圖/播影片)
+        function resetSubmitBtn() {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = false;
+            submitBtn.innerText = '確認送出';
+        }
+
         function openLightbox(index) {
-            const item = mediaData[index];
+            const item = globalMediaData[index];
             const lightbox = document.getElementById('lightbox');
-            const container = document.getElementById('lightboxMediaContainer');
-            const title = document.getElementById('lightboxTitle');
-
-            container.innerHTML = '';
-            title.innerText = item.title;
+            const mediaBox = document.getElementById('lightboxMedia');
+            mediaBox.innerHTML = '';
 
             if (item.type === 'image') {
-                container.innerHTML = `<img src="${item.url}" class="lightbox-content" style="object-fit: contain; max-width:90vw; max-height:70vh;">`;
-            } else if (item.type === 'video') {
-                const ytId = getYouTubeId(item.url);
-                // 使用 YouTube 嵌入語法，並加入自動播放，長輩免動手
-                container.innerHTML = `
-                    <iframe class="lightbox-content" width="640" height="360" 
-                        src="https://www.youtube.com/embed/${ytId}?autoplay=1" 
-                        frameborder="0" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen 
-                        style="width:80vw; height:45vw; max-width:800px; max-height:450px;">
-                    </iframe>`;
+                mediaBox.innerHTML = `<img src="${item.url}" class="lightbox-content">`;
+            } else {
+                mediaBox.innerHTML = `<iframe class="lightbox-content" width="100%" src="https://www.youtube.com/embed/${getYouTubeId(item.url)}?autoplay=1&rel=0" allow="autoplay" allowfullscreen></iframe>`;
             }
-
             lightbox.style.display = 'flex';
         }
 
-        // 關閉燈箱
         function closeLightbox() {
-            const lightbox = document.getElementById('lightbox');
-            document.getElementById('lightboxMediaContainer').innerHTML = ''; // 移除內容以停止影片播放
-            lightbox.style.display = 'none';
+            document.getElementById('lightbox').style.display = 'none';
+            document.getElementById('lightboxMedia').innerHTML = '';
         }
 
-        // 首次初始化載入
-        renderGallery();
+        window.onload = fetchSheetData;
     </script>
 </body>
 </html>
