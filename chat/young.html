@@ -34,15 +34,21 @@
     
     .chat-img { max-width: 150px; max-height: 150px; border-radius: 6px; margin-top: 5px; display: block; border: 1px solid #ddd; cursor: zoom-in; }
     
-    /* ✨ 新增：青年端 YouTube 縮圖的樣式 */
-    .yt-thumb-container { display: inline-block; position: relative; margin-top: 5px; max-width: 150px; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+    /* YouTube 影片縮圖樣式 */
+    .yt-thumb-container { display: inline-block; position: relative; margin-top: 5px; max-width: 150px; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; cursor: pointer; }
     .chat-yt-thumb { width: 100%; display: block; max-height: 100px; object-fit: cover; }
     .yt-play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 35px; height: 25px; background: rgba(255, 0, 0, 0.9); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
     .yt-play-icon::after { content: ''; display: block; width: 0; height: 0; border-style: solid; border-width: 5px 0 5px 9px; border-color: transparent transparent transparent white; margin-left: 2px; }
 
+    /* 全螢幕燈箱效果（支援圖片與影片） */
     .image-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); align-items: center; justify-content: center; }
-    .modal-content { max-width: 95%; max-height: 90vh; border-radius: 4px; }
-    .close-modal { position: absolute; top: 20px; right: 25px; color: #fff; font-size: 40px; font-weight: bold; cursor: pointer; }
+    .modal-content { max-width: 95%; max-height: 90vh; border-radius: 4px; display: none; }
+    
+    /* ✨ 新增：內嵌影片播放器的響應式外框 */
+    .modal-video-container { width: 95%; max-width: 640px; aspect-ratio: 16 / 9; display: none; background: #000; }
+    .modal-video-container iframe { width: 100%; height: 100%; border: none; }
+    
+    .close-modal { position: absolute; top: 20px; right: 25px; color: #fff; font-size: 40px; font-weight: bold; cursor: pointer; z-index: 10000; }
   </style>
 </head>
 <body>
@@ -82,9 +88,10 @@
 
   <div id="chat-box">載入對話中...</div>
 
-  <div id="imgModal" class="image-modal" onclick="closeImage()">
+  <div id="imgModal" class="image-modal" onclick="closeModal()">
     <span class="close-modal">&times;</span>
     <img class="modal-content" id="modalTargetImg">
+    <div class="modal-video-container" id="modalVideoContainer"></div>
   </div>
 
   <script>
@@ -110,15 +117,30 @@
       document.getElementById('message').focus();
     }
 
+    // 點選圖片放大
     function zoomImage(src) {
       document.getElementById("imgModal").style.display = "flex";
+      document.getElementById("modalTargetImg").style.display = "block";
+      document.getElementById("modalVideoContainer").style.display = "none";
       document.getElementById("modalTargetImg").src = src;
     }
-    function closeImage() {
-      document.getElementById("imgModal").style.display = "none";
+
+    // ✨ 點選影片全螢幕播放
+    function zoomVideo(videoId) {
+      document.getElementById("imgModal").style.display = "flex";
+      document.getElementById("modalTargetImg").style.display = "none";
+      const videoContainer = document.getElementById("modalVideoContainer");
+      videoContainer.style.display = "block";
+      videoContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
     }
 
-    // ✨ 青年端 YouTube 解析縮圖函式
+    // ✨ 關閉燈箱銷毀影片
+    function closeModal() {
+      document.getElementById("imgModal").style.display = "none";
+      document.getElementById("modalVideoContainer").innerHTML = ""; 
+    }
+
+    // 解析 YouTube 縮圖
     function getYoutubeTemplate(url) {
       let videoId = "";
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -128,10 +150,11 @@
       }
       if (videoId) {
         const thumbUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-        return `<a class="yt-thumb-container" href="${url}" target="_blank">
+        // ✨ 修改：移除 target="_blank"，綁定 onclick 播放事件
+        return `<div class="yt-thumb-container" onclick="zoomVideo('${videoId}')">
                   <img class="chat-yt-thumb" src="${thumbUrl}">
                   <div class="yt-play-icon"></div>
-                </a>`;
+                </div>`;
       }
       return `<a href="${url}" target="_blank">🔗 觀看影片</a>`;
     }
@@ -201,7 +224,7 @@
       var nameInput = document.getElementById('username').value.trim();
       var msgInput = document.getElementById('message').value.trim();
       
-      if (!nameInput || !msgInput) { alert("名字和內容不能留空喔！"); return; }
+      if (!nameInput || !msgInput) { alert("名字 and 內容不能留空喔！"); return; }
       localStorage.setItem('young_name', nameInput);
 
       var lowerMsg = msgInput.toLowerCase();
@@ -234,7 +257,7 @@
               displayText = `<img class="chat-img" src="${base64Data}" onclick="zoomImage('${base64Data}')">`;
             } else if (displayText.startsWith('[YT]')) {
               var url = displayText.replace('[YT]', '');
-              displayText = getYoutubeTemplate(url); // ✨ 套用縮圖模組
+              displayText = getYoutubeTemplate(url);
             }
 
             chatBox.innerHTML += `<div class="msg-item"><span class="msg-time">${msg.time}</span> <span class="${cls}">[${msg.name}]:</span> ${displayText}</div>`;
