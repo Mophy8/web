@@ -13,7 +13,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-color);
             margin: 0;
             padding: 12px;
@@ -24,7 +24,6 @@
         header h1 { font-size: 28px; margin: 0; }
         header p { font-size: 16px; color: #7F8C8D; margin: 5px 0; }
 
-        /* 長輩瀏覽區 (同頁混排，瀑布流) */
         .gallery-container {
             display: flex;
             flex-direction: column;
@@ -43,7 +42,7 @@
         .thumbnail-wrapper {
             position: relative;
             width: 100%;
-            padding-top: 56.25%; /* 16:9 比例 */
+            padding-top: 56.25%;
             background-color: #E5E8E8;
         }
 
@@ -69,7 +68,6 @@
 
         .loading { text-align: center; font-size: 20px; color: #7F8C8D; padding: 30px 0; }
 
-        /* 年輕人新增區 */
         .upload-box {
             max-width: 500px;
             margin: 20px auto;
@@ -92,7 +90,6 @@
             cursor: pointer; width: 100%; font-weight: bold;
         }
 
-        /* 全螢幕燈箱 */
         .lightbox {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 9999; justify-content: center; align-items: center;
@@ -119,7 +116,7 @@
             <label>分享類型：</label>
             <select id="uploadType" onchange="toggleInputFields()">
                 <option value="image">📷 分享網路圖片連結 (自動備份)</option>
-                <option value="video">🎥 分享 YouTube 影片網址</option>
+                <option value="video">🎥 分享 YouTube 影片/Shorts 網址</option>
             </select>
         </div>
         <div class="form-group" id="imageGroup">
@@ -128,11 +125,11 @@
         </div>
         <div class="form-group" id="videoGroup" style="display:none;">
             <label>YouTube 網址：</label>
-            <input type="text" id="videoUrlInput" placeholder="https://www.youtube.com/watch?v=...">
+            <input type="text" id="videoUrlInput" placeholder="https://youtube.com/shorts/... 或 watch?v=...">
         </div>
         <div class="form-group">
             <label>想對長輩說的話（標題）：</label>
-            <input type="text" id="uploadTitle" placeholder="例如：孫子今天吃大餐">
+            <input type="text" id="uploadTitle" placeholder="例如：看這隻貓咪好可愛">
         </div>
         <button class="submit-btn" id="submitBtn" onclick="handleUpload()">確認送出</button>
     </div>
@@ -147,21 +144,26 @@
         const gasUrl = 'https://script.google.com/macros/s/AKfycbx5XgrI2Db7s1pBjiiFiKlOLlBVn_OImWAVPpbr3RRJhoW0-t4iQNzlFdBWtiSVRzQ/exec'; 
         let globalMediaData = [];
 
-        // 解析 YouTube 影片 ID
+        // 【修正：加強版 YouTube ID 解析，支援 Shorts、一般影片與手機短網址】
         function getYouTubeId(url) {
+            if (!url) return null;
+            // 處理 Shorts 格式
+            if (url.includes('/shorts/')) {
+                const parts = url.split('/shorts/');
+                if (parts[1]) return parts[1].split('?')[0].split('&')[0];
+            }
+            // 處理傳統 watch?v= 或手機 youtu.be/ 格式
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const match = url.match(regExp);
             return (match && match[2].length === 11) ? match[2] : null;
         }
 
-        // 切換上傳欄位顯示
         function toggleInputFields() {
             const type = document.getElementById('uploadType').value;
             document.getElementById('imageGroup').style.display = type === 'image' ? 'block' : 'none';
             document.getElementById('videoGroup').style.display = type === 'video' ? 'block' : 'none';
         }
 
-        // 讀取試算表資料
         function fetchSheetData() {
             document.getElementById('loadingStatus').style.display = 'block';
             fetch(gasUrl)
@@ -176,7 +178,6 @@
                 });
         }
 
-        // 將資料渲染到畫面上
         function renderGallery() {
             const container = document.getElementById('galleryContainer');
             container.innerHTML = '';
@@ -186,9 +187,13 @@
                 card.className = 'media-card';
                 card.onclick = () => openLightbox(index);
 
-                let src = item.type === 'video' 
-                    ? `https://img.youtube.com/vi/${getYouTubeId(item.url)}/hqdefault.jpg`
-                    : item.url; // 照片直接讀取您輸入的網路圖片路徑
+                let src = '';
+                if (item.type === 'video') {
+                    const ytId = getYouTubeId(item.url);
+                    src = ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : 'https://via.placeholder.com/400x225?text=影片格式錯誤';
+                } else {
+                    src = item.url;
+                }
                 
                 let playBtn = item.type === 'video' ? `<div class="play-btn">▶</div>` : '';
 
@@ -203,7 +208,6 @@
             });
         }
 
-        // 年輕人點擊「確認送出」時觸發
         function handleUpload() {
             const type = document.getElementById('uploadType').value;
             const title = document.getElementById('uploadTitle').value.trim();
@@ -222,48 +226,42 @@
                 payload.imageUrl = imageUrl;
             } else {
                 const videoUrl = document.getElementById('videoUrlInput').value.trim();
-                if (!getYouTubeId(videoUrl)) { alert('請輸入正確的 YouTube 網址！'); resetSubmitBtn(); return; }
+                if (!getYouTubeId(videoUrl)) { alert('請輸入正確的 YouTube 或 Shorts 網址！'); resetSubmitBtn(); return; }
                 payload.videoUrl = videoUrl;
             }
 
             sendToGas(payload);
         }
 
-        // 核心：發送請求給 GAS 並處理假網路錯誤機制
         function sendToGas(payload) {
             fetch(gasUrl, { 
                 method: 'POST', 
                 body: JSON.stringify(payload),
-                headers: {
-                    'Content-Type': 'text/plain' // 使用 text/plain 繞過瀏覽器的 Preflight 檢查
-                }
+                headers: { 'Content-Type': 'text/plain' }
             })
             .then(res => res.json())
             .then(res => {
                 if (res.status === 'success') {
                     alert('分享成功！已自動完成雲端備份！');
                     clearForm();
-                    fetchSheetData(); // 重新載入列表
+                    fetchSheetData();
                 } else {
                     alert('系統回報錯誤：' + res.message);
                 }
             })
             .catch(err => {
-                // 💡 關鍵解法：當 GAS 進行 302 跳轉時手機瀏覽器常會誤判為錯誤
-                // 我們在此處於 1.5 秒後主動向資料庫做二次驗證
                 console.log("正在重新驗證上傳狀態...");
                 setTimeout(() => {
                     fetch(gasUrl)
                         .then(res => res.json())
                         .then(data => {
-                            // 檢查最新一筆資料的標題是否符合，符合即代表其實上傳成功了
                             if (data.length > 0 && data[0].title === payload.title) {
                                 alert('分享成功！已自動完成雲端備份！');
                                 clearForm();
-                                globalMediaData = data; // 直接更新本地資料
-                                renderGallery(); // 重新渲染
+                                globalMediaData = data;
+                                renderGallery();
                             } else {
-                                alert('網路連線發生錯誤，請確認 GAS 部署網址是否正確，且開啟「任何人」權限！');
+                                alert('網路連線發生錯誤，請確認 GAS 是否正確部署。');
                             }
                         });
                 }, 1500);
@@ -283,7 +281,6 @@
             document.getElementById('videoUrlInput').value = '';
         }
 
-        // 放大顯示燈箱
         function openLightbox(index) {
             const item = globalMediaData[index];
             const lightbox = document.getElementById('lightbox');
@@ -293,7 +290,9 @@
             if (item.type === 'image') {
                 mediaBox.innerHTML = `<img src="${item.url}" class="lightbox-content">`;
             } else {
-                mediaBox.innerHTML = `<iframe class="lightbox-content" width="100%" src="https://www.youtube.com/embed/${getYouTubeId(item.url)}?autoplay=1&rel=0" allow="autoplay" allowfullscreen></iframe>`;
+                // 燈箱中若是 Shorts，將其轉為標準 embed 嵌入格式以利播放
+                const ytId = getYouTubeId(item.url);
+                mediaBox.innerHTML = `<iframe class="lightbox-content" width="100%" src="https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0" allow="autoplay" allowfullscreen></iframe>`;
             }
             lightbox.style.display = 'flex';
         }
@@ -303,7 +302,6 @@
             document.getElementById('lightboxMedia').innerHTML = '';
         }
 
-        // 網頁載入時自動讀取試算表
         window.onload = fetchSheetData;
     </script>
 </body>
