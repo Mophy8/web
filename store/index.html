@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>記憶柑仔店 - 豐富關卡與純正台語版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>記憶柑仔店 - 豐富大升級版</title>
     <style>
         body { 
             font-family: system-ui, -apple-system, sans-serif; 
@@ -13,73 +14,116 @@
             -webkit-user-select: none; 
         }
         
-        /* 頂部資訊區 */
+        /* 頂部資訊看板 */
         .header-box { 
             text-align: center; 
             background-color: #ffe8cc; 
             border: 5px solid #d9480f; 
-            border-radius: 20px; 
+            border-radius: 24px; 
             padding: 25px; 
-            margin-bottom: 35px; 
+            margin: 0 auto 35px auto; 
+            max-width: 1050px;
             position: relative;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.05);
         }
+
+        /* 右上角分數看板 */
         .score-board {
             position: absolute;
-            top: 15px;
-            right: 20px;
+            top: 20px;
+            right: 25px;
             background-color: #d9480f;
             color: white;
-            font-size: 28px;
+            font-size: 30px;
             font-weight: bold;
-            padding: 8px 20px;
+            padding: 10px 25px;
             border-radius: 50px;
             box-shadow: 0 4px 0 #2b2b2b;
         }
         
-        /* 語音切換按鈕區 */
-        .voice-controls {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .voice-btn {
-            font-size: 26px;
-            font-weight: bold;
-            padding: 12px 30px;
-            border: 3px solid #2b2b2b;
-            border-radius: 16px;
-            cursor: pointer;
-            background-color: #fff;
-            box-shadow: 0 4px 0 #2b2b2b;
-        }
-        .voice-btn.active {
-            background-color: #ff922b;
-            color: white;
-            border-color: #d9480f;
-        }
-
         .title-text { font-size: 38px; font-weight: bold; color: #d9480f; margin: 0 0 10px 0; }
-        .instruction-text { font-size: 48px; font-weight: bold; color: #2b2b2b; margin: 0; }
+        .instruction-text { font-size: 50px; font-weight: bold; color: #2b2b2b; margin: 0; }
         
-        /* 貨架區：改為 3 欄，畫面更豐富 */
+        /* 貨架網格排版 */
         .shelf-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-            gap: 35px; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 40px; 
             max-width: 1100px; 
             margin: 0 auto; 
         }
-        .item-btn { background-color: #ffffff; border: 6px solid #2b2b2b; border-radius: 32px; padding: 25px 15px; cursor: pointer; box-shadow: 0 12px 0 #2b2b2b; transition: transform 0.1s; display: flex; flex-direction: column; align-items: center; }
-        .item-btn:active { transform: translateY(6px); box-shadow: 0 6px 0 #2b2b2b; }
-        .item-image-placeholder { width: 200px; height: 200px; background-color: #f1f3f5; border: 3px dashed #ced4da; border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 100px; margin-bottom: 20px; }
-        .item-label { font-size: 38px; font-weight: bold; color: #2b2b2b; }
+
+        /* 巨型實體感按鈕 */
+        .item-btn { 
+            background-color: #ffffff; 
+            border: 6px solid #2b2b2b; 
+            border-radius: 36px; 
+            padding: 30px 20px; 
+            cursor: pointer; 
+            box-shadow: 0 14px 0 #2b2b2b; 
+            transition: transform 0.05s, box-shadow 0.05s; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+
+        .item-btn:active { 
+            transform: translateY(8px); 
+            box-shadow: 0 6px 0 #2b2b2b; 
+        }
+
+        /* 商品圖片區 */
+        .item-image-placeholder { 
+            width: 220px; 
+            height: 220px; 
+            background-color: #f1f3f5; 
+            border: 3px dashed #ced4da; 
+            border-radius: 28px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 110px; 
+            margin-bottom: 20px; 
+        }
+
+        .item-label { font-size: 42px; font-weight: bold; color: #2b2b2b; }
         
-        /* 滿版覆蓋層 */
-        .result-overlay { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center; }
-        .result-box { background-color: white; border: 8px solid #d9480f; border-radius: 32px; padding: 50px; text-align: center; width: 80%; max-width: 550px;}
-        .result-title { font-size: 56px; font-weight: bold; margin: 0 0 30px 0; }
-        .next-btn { font-size: 38px; font-weight: bold; color: white; padding: 20px 50px; border-radius: 20px; cursor: pointer; border: none; box-shadow: 0 6px 0 rgba(0,0,0,0.2); }
+        /* 滿版彈窗提示層 */
+        .result-overlay { 
+            display: flex; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0,0,0,0.85); 
+            z-index: 100; 
+            justify-content: center; 
+            align-items: center; 
+        }
+        .result-box { 
+            background-color: white; 
+            border: 8px solid #d9480f; 
+            border-radius: 32px; 
+            padding: 50px; 
+            text-align: center; 
+            width: 80%; 
+            max-width: 580px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .result-title { font-size: 60px; font-weight: bold; margin: 0 0 35px 0; }
+        .next-btn { 
+            font-size: 40px; 
+            font-weight: bold; 
+            color: white; 
+            padding: 22px 60px; 
+            border-radius: 24px; 
+            cursor: pointer; 
+            border: none; 
+            box-shadow: 0 8px 0 rgba(0,0,0,0.2); 
+            transition: transform 0.05s;
+        }
+        .next-btn:active { transform: translateY(4px); }
     </style>
 </head>
 <body>
@@ -88,26 +132,22 @@
     <div id="start-overlay" class="result-overlay">
         <div class="result-box">
             <h2 class="result-title" style="color: #d9480f;">歡迎來到記憶柑仔店</h2>
-            <p style="font-size: 32px; font-weight: bold; margin-bottom: 30px;">請點擊下方大按鈕開始</p>
-            <button class="next-btn" style="background-color: #d9480f;" onclick="startGame()">點我開始遊戲</button>
+            <p style="font-size: 32px; font-weight: bold; margin-bottom: 35px;">請點擊下方按鈕開始遊玩</p>
+            <button class="next-btn" style="background-color: #d9480f;" onclick="startGame()">點我開始</button>
         </div>
     </div>
 
-    <!-- 語音語言切換 -->
-    <div class="voice-controls">
-        <button id="btn-zh" class="voice-btn active" onclick="setLanguage('zh')">🔊 國語發音</button>
-        <button id="btn-tw" class="voice-btn" onclick="setLanguage('tw')">🔊 台灣台語</button>
-    </div>
-
+    <!-- 主要資訊區 -->
     <div class="header-box">
         <div id="score-display" class="score-board">分數：0 分</div>
         <p id="level-title" class="title-text"></p>
         <p id="target-instruction" class="instruction-text"></p>
     </div>
 
+    <!-- 貨架區 -->
     <div id="game-shelf" class="shelf-grid"></div>
 
-    <!-- 勝負彈窗 -->
+    <!-- 結果彈窗 -->
     <div id="result-overlay" class="result-overlay" style="display: none;">
         <div id="result-box" class="result-box">
             <h2 id="result-message" class="result-title"></h2>
@@ -116,22 +156,26 @@
     </div>
 
     <script>
-        // 1. 豐富的關卡資料庫（擴充至 6 關，並優化台語漢字提升語音辨識度）
-        const poolData = [
-            { target: "彈珠汽水", voiceText: { zh: "請幫我找彈珠汽水", tw: "請鬥相共揣彈珠汽水" }, items: [{name:"彈珠汽水", icon:"🥤", isCorrect:true}, {name:"柑仔糖", icon:"🍬", isCorrect:false}, {name:"冰棒", icon:"🍧", isCorrect:false}] },
-            { target: "科學麵", voiceText: { zh: "請幫我找科學麵", tw: "請鬥相共揣科學麵" }, items: [{name:"黑松沙士", icon:"🧴", isCorrect:false}, {name:"科學麵", icon:" Ramen ", icon:"🍜", isCorrect:true}, {name:"紅豆餅", icon:"🥞", isCorrect:false}] },
-            { target: "烤香腸", voiceText: { zh: "請幫我找烤香腸", tw: "請鬥相共揣煙腸" }, items: [{name:"巧克力", icon:"🍫", isCorrect:false}, {name:"烤香腸", icon:"🌭", isCorrect:true}, {name:"豆花", icon:"🥣", isCorrect:false}] },
-            { target: "糖葫蘆", voiceText: { zh: "請幫我找糖葫蘆", tw: "請鬥相共揣糖葫蘆" }, items: [{name:"糖葫蘆", icon:"🍡", isCorrect:true}, {name:"西瓜", icon:"🍉", isCorrect:false}, {name:"雞蛋糕", icon:"🥮", isCorrect:false}] },
-            { target: "陀螺", voiceText: { zh: "請幫我找陀螺", tw: "請鬥相共揣干樂" }, items: [{name:"風箏", icon:"🪁", isCorrect:false}, {name:"陀螺", icon:"🪀", isCorrect:true}, {name:"布袋戲", icon:"🎎", isCorrect:false}] },
-            { target: "黑松沙士", voiceText: { zh: "請幫我找黑松沙士", tw: "請鬥相共揣沙士" }, items: [{name:"冬瓜茶", icon:"☕", isCorrect:false}, {name:"米漿", icon:"🥛", isCorrect:false}, {name:"黑松沙士", icon:"🟫", isCorrect:true}] }
+        // 1. 豐富的大題庫：擴充至 10 種長輩熟悉的古早味主題
+        const bigQuestionPool = [
+            { target: "彈珠汽水", items: [{name:"彈珠汽水", icon:"🥤", isCorrect:true}, {name:"柑仔糖", icon:"🍬", isCorrect:false}, {name:"冰棒", icon:"🍧", isCorrect:false}] },
+            { target: "科學麵", items: [{name:"黑松沙士", icon:"🟫", isCorrect:false}, {name:"科學麵", icon:"🍜", isCorrect:true}, {name:"紅豆餅", icon:"🥞", isCorrect:false}] },
+            { target: "烤香腸", items: [{name:"巧克力", icon:"🍫", isCorrect:false}, {name:"烤香腸", icon:"🌭", isCorrect:true}, {name:"豆花", icon:"🥣", isCorrect:false}] },
+            { target: "糖葫蘆", items: [{name:"糖葫蘆", icon:"🍡", isCorrect:true}, {name:"西瓜", icon:"🍉", isCorrect:false}, {name:"雞蛋糕", icon:"🥮", isCorrect:false}] },
+            { target: "陀螺", items: [{name:"風箏", icon:"🪁", isCorrect:false}, {name:"陀螺", icon:"🪀", isCorrect:true}, {name:"尪仔標", icon:"🃏", isCorrect:false}] },
+            { target: "黑松沙士", items: [{name:"冬瓜茶", icon:"☕", isCorrect:false}, {name:"米漿", icon:"🥛", isCorrect:false}, {name:"黑松沙士", icon:"🟫", isCorrect:true}] },
+            { target: "尪仔標", items: [{name:"尪仔標", icon:"🃏", isCorrect:true}, {name:"沙包", icon:"🎒", isCorrect:false}, {name:"竹蜻蜓", icon:"🚁", isCorrect:false}] },
+            { target: "水槍", items: [{name:"陀螺", icon:"🪀", isCorrect:false}, {name:"風箏", icon:"🪁", isCorrect:false}, {name:"水槍", icon:"🔫", isCorrect:true}] },
+            { target: "滷肉飯", items: [{name:"滷肉飯", icon:"🍚", isCorrect:true}, {name:"牛肉麵", icon:"🍜", isCorrect:false}, {name:"小籠包", icon:"🥟", isCorrect:false}] },
+            { target: "肉圓", items: [{name:"臭豆腐", icon:"🟨", isCorrect:false}, {name:"肉圓", icon:"🔮", isCorrect:true}, {name:"大腸包小腸", icon:"🌭", isCorrect:false}] }
         ];
 
-        let gameData = []; // 儲存洗牌後的關卡
+        let gameData = []; // 儲存本輪要玩的 5 道關卡
         let currentLevelIndex = 0;
         let totalScore = 0;
-        let currentLang = 'zh'; // 預設國語
+        const totalLevelsThisRound = 5; // 設定每輪玩 5 關，精簡好上手
 
-        // 音效引擎
+        // 內建高效音效引擎
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
         function playBeep(isSuccess) {
@@ -148,17 +192,21 @@
                 osc.start(); osc.stop(audioCtx.currentTime + 0.35);
             } else {
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(160, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(170, audioCtx.currentTime);
                 gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.3);
             }
         }
 
-        // 隨機洗牌演算法，讓每次玩的順序都不同
-        function shuffleQuestions() {
-            gameData = [...poolData].sort(() => Math.random() - 0.5);
-            // 隨機打亂每關裡面的選項順序
+        // 2. 優化隨機洗牌：從 10 題隨機抽 5 題，且打亂選項
+        function setupNewRound() {
+            // 先打亂整大題庫
+            const shuffledPool = [...bigQuestionPool].sort(() => Math.random() - 0.5);
+            // 只抽取前 5 題作為本輪關卡
+            gameData = shuffledPool.slice(0, totalLevelsThisRound);
+            
+            // 隨機打亂每關裡面的 3 個貨架選項
             gameData.forEach(level => {
                 level.items.sort(() => Math.random() - 0.5);
             });
@@ -167,25 +215,16 @@
         function startGame() {
             audioCtx.resume();
             document.getElementById('start-overlay').style.display = 'none';
-            shuffleQuestions(); // 洗牌
+            setupNewRound();
             renderLevel();
         }
 
-        function setLanguage(lang) {
-            currentLang = lang;
-            document.getElementById('btn-zh').className = `voice-btn ${lang === 'zh' ? 'active' : ''}`;
-            document.getElementById('btn-tw').className = `voice-btn ${lang === 'tw' ? 'active' : ''}`;
-            speakText(gameData[currentLevelIndex].voiceText[currentLang]);
-        }
-
-        // 徹底修正：指定正宗台灣語系，並放慢語速
+        // 優化台灣標準國語發音（微慢且沉穩）
         function speakText(text) {
             window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
-            
-            // 國語與台語皆統一指定為 zh-TW，靠精確的在地漢字引導系統發出台語音
             utterance.lang = 'zh-TW'; 
-            utterance.rate = 0.75; // 再放慢一點點，更溫和
+            utterance.rate = 0.85; 
             window.speechSynthesis.speak(utterance);
         }
 
@@ -206,7 +245,7 @@
             });
 
             setTimeout(() => {
-                speakText(data.voiceText[currentLang]);
+                speakText(`請幫我找 ${data.target}`);
             }, 300);
         }
 
@@ -220,18 +259,16 @@
             
             if (isCorrect) {
                 playBeep(true);
-                totalScore += 10;
+                totalScore += 20; // 改為每題 20 分，5 題剛好滿分 100 分
                 document.getElementById('score-display').innerText = `分數：${totalScore} 分`;
 
-                msg.innerText = "答對了！您真棒！";
                 msg.style.color = "#2b8a3e";
                 box.style.borderColor = "#40c057";
-                
-                // 正宗台語與國語讚美
-                const praiseText = currentLang === 'zh' ? "答對了！您真棒！" : "著啊！你真讚！";
-                speakText(praiseText);
 
+                // 判斷是否為本輪最後一關
                 if (currentLevelIndex < gameData.length - 1) {
+                    msg.innerText = "答對了！您真棒！";
+                    speakText("答對了！您真棒！");
                     btn.innerText = "下一關";
                     btn.style.backgroundColor = "#40c057";
                     btn.onclick = () => {
@@ -240,14 +277,17 @@
                         renderLevel();
                     };
                 } else {
-                    btn.innerText = "恭喜破關！再玩一次";
+                    // 通關大獎勵
+                    msg.innerHTML = `太厲害了！<br><span style="font-size:38px;color:#d9480f;">您榮獲金牌店長！</span>`;
+                    speakText("太厲害了！您榮獲金牌店長！");
+                    btn.innerText = "重新開張（再玩一次）";
                     btn.style.backgroundColor = "#2b8b57";
                     btn.onclick = () => {
                         currentLevelIndex = 0;
                         totalScore = 0;
                         document.getElementById('score-display').innerText = `分數：0 分`;
                         closeResult();
-                        shuffleQuestions(); // 重新洗牌
+                        setupNewRound(); // 重新洗牌抽題
                         renderLevel();
                     };
                 }
@@ -257,8 +297,7 @@
                 msg.style.color = "#e03131";
                 box.style.borderColor = "#fa5252";
                 
-                const retryText = currentLang === 'zh' ? "再試一次喔" : "閣試一擺喔";
-                speakText(retryText);
+                speakText("再試一次喔");
 
                 btn.innerText = "再找找看";
                 btn.style.backgroundColor = "#ff922b";
