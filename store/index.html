@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>記憶柑仔店 - 介面測試</title>
+    <title>記憶柑仔店 - 勝負邏輯與大圖測試</title>
     <style>
-        /* 基礎設定：防誤觸與大字體 */
         body {
             font-family: system-ui, -apple-system, sans-serif;
             background-color: #fcf8f2;
             margin: 0;
             padding: 20px;
-            user-select: none; /* 防止長輩按住文字跳出選取提示 */
+            user-select: none;
             -webkit-user-select: none;
         }
 
@@ -19,94 +18,242 @@
         .header-box {
             text-align: center;
             background-color: #ffe8cc;
-            border: 4px solid #d9480f;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 30px;
+            border: 5px solid #d9480f;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 35px;
         }
 
         .title-text {
-            font-size: 36px;
+            font-size: 38px;
             font-weight: bold;
             color: #d9480f;
             margin: 0 0 10px 0;
         }
 
         .instruction-text {
-            font-size: 42px;
+            font-size: 48px;
             font-weight: bold;
             color: #2b2b2b;
             margin: 0;
         }
 
-        /* 貨架網格：確保按鈕夠大、間距夠寬，防止誤觸 */
+        /* 貨架網格：加大間距與寬度 */
         .shelf-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-            max-width: 1000px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 40px;
+            max-width: 1100px;
             margin: 0 auto;
         }
 
-        /* 大按鈕設計：高對比、點擊範圍大 */
+        /* 巨型按鈕設計 */
         .item-btn {
             background-color: #ffffff;
-            border: 5px solid #2b2b2b;
-            border-radius: 24px;
-            padding: 20px;
+            border: 6px solid #2b2b2b;
+            border-radius: 32px;
+            padding: 30px 20px;
             cursor: pointer;
-            box-shadow: 0 8px 0 #2b2b2b;
+            box-shadow: 0 12px 0 #2b2b2b;
             transition: transform 0.1s, box-shadow 0.1s;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        /* 模擬點擊效果 */
         .item-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 4px 0 #2b2b2b;
+            transform: translateY(6px);
+            box-shadow: 0 6px 0 #2b2b2b;
         }
 
-        /* 預留給商品的圖片空間 */
+        /* 修正圖太小：大幅度放大圖片區塊 */
         .item-image-placeholder {
-            width: 150px;
-            height: 150px;
-            background-color: #e9ecef;
-            border-radius: 16px;
+            width: 220px;
+            height: 220px;
+            background-color: #f1f3f5;
+            border: 3px dashed #ced4da;
+            border-radius: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
-            color: #868e96;
-            margin-bottom: 15px;
+            font-size: 110px; /* 超大 Emoji 圖示，未來可直接換成 <img> */
+            margin-bottom: 20px;
         }
 
         .item-label {
-            font-size: 32px;
+            font-size: 40px;
             font-weight: bold;
             color: #2b2b2b;
         }
+
+        /* 滿版勝負結果提示區（預設隱藏） */
+        .result-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .result-box {
+            background-color: white;
+            border: 8px solid #40c057;
+            border-radius: 32px;
+            padding: 50px;
+            text-align: center;
+            max-width: 500px;
+            width: 80%;
+        }
+
+        .result-title {
+            font-size: 64px;
+            font-weight: bold;
+            margin: 0 0 30px 0;
+        }
+
+        /* 答對與答錯的特別顏色 */
+        .text-success { color: #2b8a3e; }
+        .text-wrong { color: #e03131; }
+
+        /* 下一關/再試一次 的巨型按鈕 */
+        .next-btn {
+            font-size: 38px;
+            font-weight: bold;
+            color: white;
+            padding: 20px 50px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.2);
+        }
+        .btn-success { background-color: #40c057; }
+        .btn-wrong { background-color: #ff922b; }
     </style>
 </head>
 <body>
 
+    <!-- 提示區 -->
     <div class="header-box">
-        <p class="title-text">第一關：客人的訂單</p>
-        <p class="instruction-text">請點選【彈珠汽水】</p>
+        <p id="level-title" class="title-text">第一關：客人的訂單</p>
+        <p id="target-instruction" class="instruction-text">請點選【彈珠汽水】</p>
     </div>
 
-    <div class="shelf-grid">
-        <button class="item-btn" onclick="alert('答對了！')">
-            <div class="item-image-placeholder">🧃</div>
-            <span class="item-label">彈珠汽水</span>
-        </button>
-
-        <button class="item-btn" onclick="alert('再試一次喔！')">
-            <div class="item-image-placeholder">🍬</div>
-            <span class="item-label">柑仔糖</span>
-        </button>
+    <!-- 貨架區 -->
+    <div id="game-shelf" class="shelf-grid">
+        <!-- 這裡由 JavaScript 動態生成按鈕，方便控管勝負 -->
     </div>
 
+    <!-- 滿版勝負結果提示區 -->
+    <div id="result-overlay" class="result-overlay">
+        <div id="result-box" class="result-box">
+            <h2 id="result-message" class="result-title">答對了！</h2>
+            <button id="action-btn" class="next-btn" onclick="closeResult()">下一關</button>
+        </div>
+    </div>
+
+    <script>
+        // 模擬關卡資料
+        const gameData = [
+            {
+                level: "第一關：客人的訂單",
+                target: "彈珠汽水",
+                items: [
+                    { name: "彈珠汽水", icon: "🧃", isCorrect: true },
+                    { name: "柑仔糖", icon: "🍬", isCorrect: false }
+                ]
+            },
+            {
+                level: "第二關：客人的訂單",
+                target: "科學麵",
+                items: [
+                    { name: "黑松沙士", icon: "🥤", isCorrect: false },
+                    { name: "科學麵", icon: "🍜", isCorrect: true }
+                ]
+            }
+        ];
+
+        let currentLevelIndex = 0;
+
+        // 初始化關卡
+        function renderLevel() {
+            const data = gameData[currentLevelIndex];
+            
+            // 更新文字
+            document.getElementById('level-title').innerText = data.level;
+            document.getElementById('target-instruction').innerText = `請點選【${data.target}】`;
+            
+            // 生成貨架物品
+            const shelf = document.getElementById('game-shelf');
+            shelf.innerHTML = ''; // 清空舊物品
+            
+            data.items.forEach(item => {
+                const btn = document.createElement('button');
+                btn.className = 'item-btn';
+                // 點擊時觸發勝負邏輯
+                btn.onclick = () => handleChoice(item.isCorrect);
+                
+                btn.innerHTML = `
+                    <div class="item-image-placeholder">${item.icon}</div>
+                    <span class="item-label">${item.name}</span>
+                `;
+                shelf.appendChild(btn);
+            });
+        }
+
+        // 判定勝負邏輯
+        function handleChoice(isCorrect) {
+            const overlay = document.getElementById('result-overlay');
+            const box = document.getElementById('result-box');
+            const msg = document.getElementById('result-message');
+            const btn = document.getElementById('action-btn');
+
+            overlay.style.display = 'flex';
+
+            if (isCorrect) {
+                msg.innerText = "答對了！您真棒！";
+                msg.className = "result-title text-success";
+                box.style.borderColor = "#40c057";
+                
+                // 檢查是不是最後一關
+                if (currentLevelIndex < gameData.length - 1) {
+                    btn.innerText = "下一關";
+                    btn.className = "next-btn btn-success";
+                    btn.onclick = () => {
+                        currentLevelIndex++;
+                        closeResult();
+                        renderLevel();
+                    };
+                } else {
+                    btn.innerText = "再玩一次";
+                    btn.className = "next-btn btn-success";
+                    btn.onclick = () => {
+                        currentLevelIndex = 0;
+                        closeResult();
+                        renderLevel();
+                    };
+                }
+            } else {
+                msg.innerText = "再試一次喔！";
+                msg.className = "result-title text-wrong";
+                box.style.borderColor = "#fa5252";
+                btn.innerText = "繼續嘗試";
+                btn.className = "next-btn btn-wrong";
+                btn.onclick = () => closeResult();
+            }
+        }
+
+        function closeResult() {
+            document.getElementById('result-overlay').style.display = 'none';
+        }
+
+        // 首次載入
+        renderLevel();
+    </script>
 </body>
 </html>
