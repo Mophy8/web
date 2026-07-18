@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>記憶柑仔店 - 手機平板雙適應版</title>
+    <title>記憶柑仔店 - 適應平板手機與打烊版</title>
     <style>
-        /* 基礎防錯與底色設定 */
         body { 
             font-family: system-ui, -apple-system, sans-serif; 
             background-color: #fcf8f2; 
@@ -16,11 +15,8 @@
             box-sizing: border-box;
         }
 
-        *, *:before, *:after {
-            box-sizing: inherit;
-        }
+        *, *:before, *:after { box-sizing: inherit; }
         
-        /* 頂部資訊看板 */
         .header-box { 
             text-align: center; 
             background-color: #ffe8cc; 
@@ -33,7 +29,6 @@
             box-shadow: 0 5px 0 rgba(0,0,0,0.05);
         }
 
-        /* 分數看板 */
         .score-board {
             position: absolute;
             top: 15px;
@@ -50,7 +45,6 @@
         .title-text { font-size: 22px; font-weight: bold; color: #d9480f; margin: 0 0 5px 0; }
         .instruction-text { font-size: 32px; font-weight: bold; color: #2b2b2b; margin: 0; }
         
-        /* 貨架網格：核心響應式排版（預設手機為一列，大螢幕變三列） */
         .shelf-grid { 
             display: grid; 
             grid-template-columns: 1fr; 
@@ -59,7 +53,6 @@
             margin: 0 auto; 
         }
 
-        /* 巨型按鈕（手機版高度有稍微收斂，防止爆頁） */
         .item-btn { 
             background-color: #ffffff; 
             border: 5px solid #2b2b2b; 
@@ -69,18 +62,14 @@
             box-shadow: 0 8px 0 #2b2b2b; 
             transition: transform 0.05s, box-shadow 0.05s; 
             display: flex; 
-            flex-direction: row; /* 手機版圖在左、字在右，節省高度 */
+            flex-direction: row; 
             align-items: center;
             justify-content: flex-start;
             width: 100%;
         }
 
-        .item-btn:active { 
-            transform: translateY(4px); 
-            box-shadow: 0 4px 0 #2b2b2b; 
-        }
+        .item-btn:active { transform: translateY(4px); box-shadow: 0 4px 0 #2b2b2b; }
 
-        /* 商品圖示區 */
         .item-image-placeholder { 
             width: 80px; 
             height: 80px; 
@@ -91,13 +80,12 @@
             align-items: center; 
             justify-content: center; 
             font-size: 50px; 
-            margin-right: 25px; /* 圖右方留空隙給文字 */
+            margin-right: 25px; 
             flex-shrink: 0;
         }
 
         .item-label { font-size: 32px; font-weight: bold; color: #2b2b2b; }
         
-        /* 滿版覆蓋提示層 */
         .result-overlay { 
             display: flex; 
             position: fixed; 
@@ -122,6 +110,13 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
         .result-title { font-size: 42px; font-weight: bold; margin: 0 0 25px 0; line-height: 1.3; }
+        
+        /* 結束按鈕樣式調整 */
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
         .next-btn { 
             font-size: 28px; 
             font-weight: bold; 
@@ -131,39 +126,25 @@
             cursor: pointer; 
             border: none; 
             box-shadow: 0 6px 0 rgba(0,0,0,0.2); 
-            transition: transform 0.05s;
-            width: 100%; /* 按鈕滿版更好按 */
+            width: 100%; 
         }
         .next-btn:active { transform: translateY(3px); }
 
-        /* ────────────────────────────────────────────────────────
-           平板與電腦大螢幕專用樣式 (螢幕寬度大於 768px 時自動切換)
-           ──────────────────────────────────────────────────────── */
         @media (min-width: 768px) {
             body { padding: 30px; }
             .header-box { padding: 30px; margin-bottom: 40px; border-width: 6px; }
             .score-board { font-size: 28px; top: 25px; right: 25px; padding: 10px 25px; }
             .title-text { font-size: 36px; margin-bottom: 10px; }
             .instruction-text { font-size: 48px; }
-            
-            /* 變回 3 欄並排的豪華大貨架 */
             .shelf-grid { grid-template-columns: repeat(3, 1fr); gap: 30px; }
-            
-            /* 按鈕恢復上下排列的巨型方塊外觀 */
-            .item-btn { 
-                flex-direction: column; 
-                justify-content: center;
-                padding: 40px 20px; 
-                box-shadow: 0 14px 0 #2b2b2b;
-                border-width: 6px;
-            }
+            .item-btn { flex-direction: column; justify-content: center; padding: 40px 20px; box-shadow: 0 14px 0 #2b2b2b; border-width: 6px; }
             .item-btn:active { transform: translateY(8px); box-shadow: 0 6px 0 #2b2b2b; }
             .item-image-placeholder { width: 180px; height: 180px; font-size: 100px; margin-right: 0; margin-bottom: 20px; }
             .item-label { font-size: 40px; }
-            
             .result-box { padding: 50px; border-width: 8px; }
             .result-title { font-size: 55px; }
-            .next-btn { font-size: 36px; width: auto; }
+            .next-btn { font-size: 32px; }
+            .btn-container { flex-direction: row; }
         }
     </style>
 </head>
@@ -192,12 +173,14 @@
     <div id="result-overlay" class="result-overlay" style="display: none;">
         <div id="result-box" class="result-box">
             <h2 id="result-message" class="result-title"></h2>
-            <button id="action-btn" class="next-btn" onclick="closeResult()"></button>
+            <!-- 容器：放置下一關、再玩一次或關閉按鈕 -->
+            <div id="btn-container" class="btn-container">
+                <button id="action-btn" class="next-btn"></button>
+            </div>
         </div>
     </div>
 
     <script>
-        // 10 種懷舊主題題庫
         const bigQuestionPool = [
             { target: "彈珠汽水", items: [{name:"彈珠汽水", icon:"🥤", isCorrect:true}, {name:"柑仔糖", icon:"🍬", isCorrect:false}, {name:"冰棒", icon:"🍧", isCorrect:false}] },
             { target: "科學麵", items: [{name:"黑松沙士", icon:"🟫", isCorrect:false}, {name:"科學麵", icon:"🍜", isCorrect:true}, {name:"紅豆餅", icon:"🥞", isCorrect:false}] },
@@ -254,7 +237,6 @@
             renderLevel();
         }
 
-        // 固定使用標準台灣國語（微慢清晰速度）
         function speakText(text) {
             window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
@@ -279,20 +261,18 @@
                 shelf.appendChild(btn);
             });
 
-            // 進入關卡自動播放題目語音
-            setTimeout(() => {
-                speakText(`請幫我找 ${data.target}`);
-            }, 300);
+            setTimeout(() => { speakText(`請幫我找 ${data.target}`); }, 300);
         }
 
         function handleChoice(isCorrect) {
             const overlay = document.getElementById('result-overlay');
             const box = document.getElementById('result-box');
             const msg = document.getElementById('result-message');
-            const btn = document.getElementById('action-btn');
+            const btnContainer = document.getElementById('btn-container');
             
             overlay.style.display = 'flex';
-            
+            btnContainer.innerHTML = ''; // 清空按鈕
+
             if (isCorrect) {
                 playBeep(true);
                 totalScore += 20; 
@@ -304,19 +284,28 @@
                 if (currentLevelIndex < gameData.length - 1) {
                     msg.innerText = "答對了！您真棒！";
                     speakText("答對了！您真棒！");
-                    btn.innerText = "下一關";
-                    btn.style.backgroundColor = "#40c057";
-                    btn.onclick = () => {
+                    
+                    const nextBtn = document.createElement('button');
+                    nextBtn.className = 'next-btn';
+                    nextBtn.innerText = "下一關";
+                    nextBtn.style.backgroundColor = "#40c057";
+                    nextBtn.onclick = () => {
                         currentLevelIndex++;
                         closeResult();
                         renderLevel();
                     };
+                    btnContainer.appendChild(nextBtn);
                 } else {
+                    // 最終通關：提供「再玩一次」與「離開遊戲」雙重選項
                     msg.innerHTML = `太厲害了！<br><span style="font-size:28px;color:#d9480f;">您榮獲金牌店長！</span>`;
                     speakText("太厲害了！您榮獲金牌店長！");
-                    btn.innerText = "再玩一次";
-                    btn.style.backgroundColor = "#2b8b57";
-                    btn.onclick = () => {
+                    
+                    // 按鈕一：再玩一次
+                    const replayBtn = document.createElement('button');
+                    replayBtn.className = 'next-btn';
+                    replayBtn.innerText = "再玩一次";
+                    replayBtn.style.backgroundColor = "#2b8b57";
+                    replayBtn.onclick = () => {
                         currentLevelIndex = 0;
                         totalScore = 0;
                         document.getElementById('score-display').innerText = `分數：0`;
@@ -324,6 +313,16 @@
                         setupNewRound();
                         renderLevel();
                     };
+                    
+                    // 按鈕二：離開遊戲
+                    const closeBtn = document.createElement('button');
+                    closeBtn.className = 'next-btn';
+                    closeBtn.innerText = "結束離開";
+                    closeBtn.style.backgroundColor = "#e03131";
+                    closeBtn.onclick = () => closeGameWindow();
+
+                    btnContainer.appendChild(replayBtn);
+                    btnContainer.appendChild(closeBtn);
                 }
             } else {
                 playBeep(false);
@@ -333,10 +332,31 @@
                 
                 speakText("再試一次喔");
 
-                btn.innerText = "再找找看";
-                btn.style.backgroundColor = "#ff922b";
-                btn.onclick = () => closeResult();
+                const retryBtn = document.createElement('button');
+                retryBtn.className = 'next-btn';
+                retryBtn.innerText = "再找找看";
+                retryBtn.style.backgroundColor = "#ff922b";
+                retryBtn.onclick = () => closeResult();
+                btnContainer.appendChild(retryBtn);
             }
+        }
+
+        // 核心優化：安全的關閉網頁/打烊邏輯
+        function closeGameWindow() {
+            window.speechSynthesis.cancel();
+            
+            // 嘗試關閉網頁 (如果網頁是用程式碼 open 的會成功)
+            window.close();
+
+            // 如果關閉失敗（例如在 LINE、FB、一般分頁中打開），則切換成溫馨打烊提示畫面
+            const box = document.getElementById('result-box');
+            const msg = document.getElementById('result-message');
+            const btnContainer = document.getElementById('btn-container');
+            
+            box.style.borderColor = "#2b2b2b";
+            msg.innerHTML = `🏪 柑仔店打烊囉！<br><br><span style="font-size:26px;color:#555;font-weight:normal;">遊戲已安全結束。<br>現在您可以放心地關閉這個手機或平板網頁分頁囉！</span>`;
+            speakText("柑仔店打烊囉，您可以關閉網頁了");
+            btnContainer.innerHTML = ''; // 移除所有按鈕，只留提示文字
         }
 
         function closeResult() { 
