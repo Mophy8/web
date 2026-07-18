@@ -2,93 +2,102 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>記憶柑仔店 - 豐富大升級版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>記憶柑仔店 - 手機平板雙適應版</title>
     <style>
+        /* 基礎防錯與底色設定 */
         body { 
             font-family: system-ui, -apple-system, sans-serif; 
             background-color: #fcf8f2; 
             margin: 0; 
-            padding: 20px; 
+            padding: 15px; 
             user-select: none; 
-            -webkit-user-select: none; 
+            -webkit-user-select: none;
+            box-sizing: border-box;
+        }
+
+        *, *:before, *:after {
+            box-sizing: inherit;
         }
         
         /* 頂部資訊看板 */
         .header-box { 
             text-align: center; 
             background-color: #ffe8cc; 
-            border: 5px solid #d9480f; 
-            border-radius: 24px; 
-            padding: 25px; 
-            margin: 0 auto 35px auto; 
-            max-width: 1050px;
+            border: 4px solid #d9480f; 
+            border-radius: 20px; 
+            padding: 15px; 
+            margin: 0 auto 20px auto; 
+            max-width: 1000px;
             position: relative;
-            box-shadow: 0 6px 0 rgba(0,0,0,0.05);
+            box-shadow: 0 5px 0 rgba(0,0,0,0.05);
         }
 
-        /* 右上角分數看板 */
+        /* 分數看板 */
         .score-board {
             position: absolute;
-            top: 20px;
-            right: 25px;
+            top: 15px;
+            right: 15px;
             background-color: #d9480f;
             color: white;
-            font-size: 30px;
+            font-size: 20px;
             font-weight: bold;
-            padding: 10px 25px;
+            padding: 6px 16px;
             border-radius: 50px;
-            box-shadow: 0 4px 0 #2b2b2b;
+            box-shadow: 0 3px 0 #2b2b2b;
         }
         
-        .title-text { font-size: 38px; font-weight: bold; color: #d9480f; margin: 0 0 10px 0; }
-        .instruction-text { font-size: 50px; font-weight: bold; color: #2b2b2b; margin: 0; }
+        .title-text { font-size: 22px; font-weight: bold; color: #d9480f; margin: 0 0 5px 0; }
+        .instruction-text { font-size: 32px; font-weight: bold; color: #2b2b2b; margin: 0; }
         
-        /* 貨架網格排版 */
+        /* 貨架網格：核心響應式排版（預設手機為一列，大螢幕變三列） */
         .shelf-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-            gap: 40px; 
-            max-width: 1100px; 
+            grid-template-columns: 1fr; 
+            gap: 15px; 
+            max-width: 1000px; 
             margin: 0 auto; 
         }
 
-        /* 巨型實體感按鈕 */
+        /* 巨型按鈕（手機版高度有稍微收斂，防止爆頁） */
         .item-btn { 
             background-color: #ffffff; 
-            border: 6px solid #2b2b2b; 
-            border-radius: 36px; 
-            padding: 30px 20px; 
+            border: 5px solid #2b2b2b; 
+            border-radius: 24px; 
+            padding: 15px 20px; 
             cursor: pointer; 
-            box-shadow: 0 14px 0 #2b2b2b; 
+            box-shadow: 0 8px 0 #2b2b2b; 
             transition: transform 0.05s, box-shadow 0.05s; 
             display: flex; 
-            flex-direction: column; 
-            align-items: center; 
+            flex-direction: row; /* 手機版圖在左、字在右，節省高度 */
+            align-items: center;
+            justify-content: flex-start;
+            width: 100%;
         }
 
         .item-btn:active { 
-            transform: translateY(8px); 
-            box-shadow: 0 6px 0 #2b2b2b; 
+            transform: translateY(4px); 
+            box-shadow: 0 4px 0 #2b2b2b; 
         }
 
-        /* 商品圖片區 */
+        /* 商品圖示區 */
         .item-image-placeholder { 
-            width: 220px; 
-            height: 220px; 
+            width: 80px; 
+            height: 80px; 
             background-color: #f1f3f5; 
-            border: 3px dashed #ced4da; 
-            border-radius: 28px; 
+            border: 2px dashed #ced4da; 
+            border-radius: 16px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            font-size: 110px; 
-            margin-bottom: 20px; 
+            font-size: 50px; 
+            margin-right: 25px; /* 圖右方留空隙給文字 */
+            flex-shrink: 0;
         }
 
-        .item-label { font-size: 42px; font-weight: bold; color: #2b2b2b; }
+        .item-label { font-size: 32px; font-weight: bold; color: #2b2b2b; }
         
-        /* 滿版彈窗提示層 */
+        /* 滿版覆蓋提示層 */
         .result-overlay { 
             display: flex; 
             position: fixed; 
@@ -100,30 +109,62 @@
             z-index: 100; 
             justify-content: center; 
             align-items: center; 
+            padding: 20px;
         }
         .result-box { 
             background-color: white; 
-            border: 8px solid #d9480f; 
-            border-radius: 32px; 
-            padding: 50px; 
+            border: 6px solid #d9480f; 
+            border-radius: 28px; 
+            padding: 35px 20px; 
             text-align: center; 
-            width: 80%; 
-            max-width: 580px;
+            width: 100%; 
+            max-width: 500px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
-        .result-title { font-size: 60px; font-weight: bold; margin: 0 0 35px 0; }
+        .result-title { font-size: 42px; font-weight: bold; margin: 0 0 25px 0; line-height: 1.3; }
         .next-btn { 
-            font-size: 40px; 
+            font-size: 28px; 
             font-weight: bold; 
             color: white; 
-            padding: 22px 60px; 
-            border-radius: 24px; 
+            padding: 15px 40px; 
+            border-radius: 18px; 
             cursor: pointer; 
             border: none; 
-            box-shadow: 0 8px 0 rgba(0,0,0,0.2); 
+            box-shadow: 0 6px 0 rgba(0,0,0,0.2); 
             transition: transform 0.05s;
+            width: 100%; /* 按鈕滿版更好按 */
         }
-        .next-btn:active { transform: translateY(4px); }
+        .next-btn:active { transform: translateY(3px); }
+
+        /* ────────────────────────────────────────────────────────
+           平板與電腦大螢幕專用樣式 (螢幕寬度大於 768px 時自動切換)
+           ──────────────────────────────────────────────────────── */
+        @media (min-width: 768px) {
+            body { padding: 30px; }
+            .header-box { padding: 30px; margin-bottom: 40px; border-width: 6px; }
+            .score-board { font-size: 28px; top: 25px; right: 25px; padding: 10px 25px; }
+            .title-text { font-size: 36px; margin-bottom: 10px; }
+            .instruction-text { font-size: 48px; }
+            
+            /* 變回 3 欄並排的豪華大貨架 */
+            .shelf-grid { grid-template-columns: repeat(3, 1fr); gap: 30px; }
+            
+            /* 按鈕恢復上下排列的巨型方塊外觀 */
+            .item-btn { 
+                flex-direction: column; 
+                justify-content: center;
+                padding: 40px 20px; 
+                box-shadow: 0 14px 0 #2b2b2b;
+                border-width: 6px;
+            }
+            .item-btn:active { transform: translateY(8px); box-shadow: 0 6px 0 #2b2b2b; }
+            .item-image-placeholder { width: 180px; height: 180px; font-size: 100px; margin-right: 0; margin-bottom: 20px; }
+            .item-label { font-size: 40px; }
+            
+            .result-box { padding: 50px; border-width: 8px; }
+            .result-title { font-size: 55px; }
+            .next-btn { font-size: 36px; width: auto; }
+        }
     </style>
 </head>
 <body>
@@ -131,15 +172,15 @@
     <!-- 啟動畫面 -->
     <div id="start-overlay" class="result-overlay">
         <div class="result-box">
-            <h2 class="result-title" style="color: #d9480f;">歡迎來到記憶柑仔店</h2>
-            <p style="font-size: 32px; font-weight: bold; margin-bottom: 35px;">請點擊下方按鈕開始遊玩</p>
+            <h2 class="result-title" style="color: #d9480f;">歡迎來到<br>記憶柑仔店</h2>
+            <p style="font-size: 24px; font-weight: bold; margin-bottom: 30px; color:#555;">請點擊下方按鈕開始遊玩</p>
             <button class="next-btn" style="background-color: #d9480f;" onclick="startGame()">點我開始</button>
         </div>
     </div>
 
     <!-- 主要資訊區 -->
     <div class="header-box">
-        <div id="score-display" class="score-board">分數：0 分</div>
+        <div id="score-display" class="score-board">分數：0</div>
         <p id="level-title" class="title-text"></p>
         <p id="target-instruction" class="instruction-text"></p>
     </div>
@@ -156,7 +197,7 @@
     </div>
 
     <script>
-        // 1. 豐富的大題庫：擴充至 10 種長輩熟悉的古早味主題
+        // 10 種懷舊主題題庫
         const bigQuestionPool = [
             { target: "彈珠汽水", items: [{name:"彈珠汽水", icon:"🥤", isCorrect:true}, {name:"柑仔糖", icon:"🍬", isCorrect:false}, {name:"冰棒", icon:"🍧", isCorrect:false}] },
             { target: "科學麵", items: [{name:"黑松沙士", icon:"🟫", isCorrect:false}, {name:"科學麵", icon:"🍜", isCorrect:true}, {name:"紅豆餅", icon:"🥞", isCorrect:false}] },
@@ -170,12 +211,11 @@
             { target: "肉圓", items: [{name:"臭豆腐", icon:"🟨", isCorrect:false}, {name:"肉圓", icon:"🔮", isCorrect:true}, {name:"大腸包小腸", icon:"🌭", isCorrect:false}] }
         ];
 
-        let gameData = []; // 儲存本輪要玩的 5 道關卡
+        let gameData = []; 
         let currentLevelIndex = 0;
         let totalScore = 0;
-        const totalLevelsThisRound = 5; // 設定每輪玩 5 關，精簡好上手
+        const totalLevelsThisRound = 5; 
 
-        // 內建高效音效引擎
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
         function playBeep(isSuccess) {
@@ -199,14 +239,9 @@
             }
         }
 
-        // 2. 優化隨機洗牌：從 10 題隨機抽 5 題，且打亂選項
         function setupNewRound() {
-            // 先打亂整大題庫
             const shuffledPool = [...bigQuestionPool].sort(() => Math.random() - 0.5);
-            // 只抽取前 5 題作為本輪關卡
             gameData = shuffledPool.slice(0, totalLevelsThisRound);
-            
-            // 隨機打亂每關裡面的 3 個貨架選項
             gameData.forEach(level => {
                 level.items.sort(() => Math.random() - 0.5);
             });
@@ -219,7 +254,7 @@
             renderLevel();
         }
 
-        // 優化台灣標準國語發音（微慢且沉穩）
+        // 固定使用標準台灣國語（微慢清晰速度）
         function speakText(text) {
             window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
@@ -244,6 +279,7 @@
                 shelf.appendChild(btn);
             });
 
+            // 進入關卡自動播放題目語音
             setTimeout(() => {
                 speakText(`請幫我找 ${data.target}`);
             }, 300);
@@ -259,13 +295,12 @@
             
             if (isCorrect) {
                 playBeep(true);
-                totalScore += 20; // 改為每題 20 分，5 題剛好滿分 100 分
-                document.getElementById('score-display').innerText = `分數：${totalScore} 分`;
+                totalScore += 20; 
+                document.getElementById('score-display').innerText = `分數：${totalScore}`;
 
                 msg.style.color = "#2b8a3e";
                 box.style.borderColor = "#40c057";
 
-                // 判斷是否為本輪最後一關
                 if (currentLevelIndex < gameData.length - 1) {
                     msg.innerText = "答對了！您真棒！";
                     speakText("答對了！您真棒！");
@@ -277,17 +312,16 @@
                         renderLevel();
                     };
                 } else {
-                    // 通關大獎勵
-                    msg.innerHTML = `太厲害了！<br><span style="font-size:38px;color:#d9480f;">您榮獲金牌店長！</span>`;
+                    msg.innerHTML = `太厲害了！<br><span style="font-size:28px;color:#d9480f;">您榮獲金牌店長！</span>`;
                     speakText("太厲害了！您榮獲金牌店長！");
-                    btn.innerText = "重新開張（再玩一次）";
+                    btn.innerText = "再玩一次";
                     btn.style.backgroundColor = "#2b8b57";
                     btn.onclick = () => {
                         currentLevelIndex = 0;
                         totalScore = 0;
-                        document.getElementById('score-display').innerText = `分數：0 分`;
+                        document.getElementById('score-display').innerText = `分數：0`;
                         closeResult();
-                        setupNewRound(); // 重新洗牌抽題
+                        setupNewRound();
                         renderLevel();
                     };
                 }
