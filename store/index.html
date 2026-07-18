@@ -2,27 +2,61 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>記憶柑仔店 - 擴充版</title>
+    <title>記憶柑仔店 - 分數與音效修正版</title>
     <style>
-        /* ... 前面 CSS 設定維持不變，確保介面大又好點 ... */
-        body { font-family: sans-serif; background-color: #fcf8f2; margin: 0; padding: 20px; user-select: none; }
-        .header-box { text-align: center; background-color: #ffe8cc; border: 5px solid #d9480f; border-radius: 20px; padding: 25px; margin-bottom: 35px; }
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            background-color: #fcf8f2; 
+            margin: 0; 
+            padding: 20px; 
+            user-select: none; 
+            -webkit-user-select: none; 
+        }
+        
+        /* 頂部資訊區：加入分數看板 */
+        .header-box { 
+            text-align: center; 
+            background-color: #ffe8cc; 
+            border: 5px solid #d9480f; 
+            border-radius: 20px; 
+            padding: 25px; 
+            margin-bottom: 35px; 
+            position: relative;
+        }
+        .score-board {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background-color: #d9480f;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            padding: 8px 20px;
+            border-radius: 50px;
+            box-shadow: 0 4px 0 #2b2b2b;
+        }
         .title-text { font-size: 38px; font-weight: bold; color: #d9480f; margin: 0 0 10px 0; }
         .instruction-text { font-size: 48px; font-weight: bold; color: #2b2b2b; margin: 0; }
+        
+        /* 貨架區 */
         .shelf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px; max-width: 1100px; margin: 0 auto; }
         .item-btn { background-color: #ffffff; border: 6px solid #2b2b2b; border-radius: 32px; padding: 30px 20px; cursor: pointer; box-shadow: 0 12px 0 #2b2b2b; transition: transform 0.1s; display: flex; flex-direction: column; align-items: center; }
         .item-btn:active { transform: translateY(6px); }
         .item-image-placeholder { width: 220px; height: 220px; background-color: #f1f3f5; border: 3px dashed #ced4da; border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 110px; margin-bottom: 20px; }
         .item-label { font-size: 40px; font-weight: bold; color: #2b2b2b; }
+        
+        /* 彈窗 */
         .result-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center; }
-        .result-box { background-color: white; border: 8px solid #40c057; border-radius: 32px; padding: 50px; text-align: center; width: 80%; }
+        .result-box { background-color: white; border: 8px solid #40c057; border-radius: 32px; padding: 50px; text-align: center; width: 80%; max-width: 550px;}
         .result-title { font-size: 64px; font-weight: bold; margin: 0 0 30px 0; }
-        .next-btn { font-size: 38px; font-weight: bold; color: white; padding: 20px 50px; border-radius: 20px; cursor: pointer; border: none; }
+        .next-btn { font-size: 38px; font-weight: bold; color: white; padding: 20px 50px; border-radius: 20px; cursor: pointer; border: none; box-shadow: 0 6px 0 rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
     <div class="header-box">
+        <!-- 分數看板 -->
+        <div id="score-display" class="score-board">分數：0 分</div>
         <p id="level-title" class="title-text"></p>
         <p id="target-instruction" class="instruction-text"></p>
     </div>
@@ -37,18 +71,29 @@
     </div>
 
     <script>
-        // 1. 擴充關卡資料
+        // 1. 關卡資料
         const gameData = [
             { target: "彈珠汽水", items: [{name:"彈珠汽水", icon:"🥤", isCorrect:true}, {name:"柑仔糖", icon:"🍬", isCorrect:false}] },
             { target: "科學麵", items: [{name:"科學麵", icon:"🍜", isCorrect:true}, {name:"黑松沙士", icon:"🧴", isCorrect:false}] },
             { target: "泡泡糖", items: [{name:"巧克力", icon:"🍫", isCorrect:false}, {name:"泡泡糖", icon:"🎈", isCorrect:true}] }
         ];
 
-        // 2. 音效設定 (請將 mp3 放在同資料夾，或使用線上網址)
-        const successAudio = new Audio('https://actions.google.com/sounds/v1/ui/positive_select.ogg');
-        const wrongAudio = new Audio('https://actions.google.com/sounds/v1/ui/negative_select.ogg');
+        // 2. 音效管理（修正：使用標準公共音效連結，並加上播放安全機制）
+        const sounds = {
+            success: new Audio('https://actions.google.com/sounds/v1/ui/positive_select.ogg'),
+            wrong: new Audio('https://actions.google.com/sounds/v1/ui/negative_select.ogg')
+        };
+
+        // 修正播放函式：強制重設時間，避免連續點擊不發聲；加上 catch 防止瀏覽器阻擋報錯
+        function playSound(type) {
+            if (sounds[type]) {
+                sounds[type].currentTime = 0; 
+                sounds[type].play().catch(err => console.log("音效播放被瀏覽器暫時阻擋，點擊後即恢復正常"));
+            }
+        }
 
         let currentLevelIndex = 0;
+        let totalScore = 0; // 累計分數
 
         function renderLevel() {
             const data = gameData[currentLevelIndex];
@@ -69,24 +114,49 @@
 
         function handleChoice(isCorrect) {
             const overlay = document.getElementById('result-overlay');
+            const box = document.getElementById('result-box');
             const msg = document.getElementById('result-message');
             const btn = document.getElementById('action-btn');
             
             overlay.style.display = 'flex';
             
             if (isCorrect) {
-                successAudio.play(); // 播放成功音效
+                playSound('success'); // 播放修正後的成功音效
+                
+                // 答對加 10 分並更新看板
+                totalScore += 10;
+                document.getElementById('score-display').innerText = `分數：${totalScore} 分`;
+
                 msg.innerText = "答對了！您真棒！";
-                btn.innerText = (currentLevelIndex < gameData.length - 1) ? "下一關" : "再玩一次";
-                btn.style.backgroundColor = "#40c057";
-                btn.onclick = () => {
-                    currentLevelIndex = (currentLevelIndex < gameData.length - 1) ? currentLevelIndex + 1 : 0;
-                    closeResult();
-                    renderLevel();
-                };
+                msg.style.color = "#2b8a3e";
+                box.style.borderColor = "#40c057";
+                
+                if (currentLevelIndex < gameData.length - 1) {
+                    btn.innerText = "下一關";
+                    btn.style.backgroundColor = "#40c057";
+                    btn.onclick = () => {
+                        currentLevelIndex++;
+                        closeResult();
+                        renderLevel();
+                    };
+                } else {
+                    btn.innerText = "再玩一次";
+                    btn.style.backgroundColor = "#2b8b57";
+                    btn.onclick = () => {
+                        currentLevelIndex = 0;
+                        totalScore = 0; // 重置分數
+                        document.getElementById('score-display').innerText = `分數：0 分`;
+                        closeResult();
+                        renderLevel();
+                    };
+                }
             } else {
-                wrongAudio.play(); // 播放錯誤音效
+                playSound('wrong'); // 播放修正後的失敗音效
+                
                 msg.innerText = "再試一次喔！";
+                msg.style.color = "#e03131";
+                box.style.borderColor = "#fa5252";
+                
                 btn.innerText = "再找找看";
                 btn.style.backgroundColor = "#ff922b";
                 btn.onclick = () => closeResult();
@@ -94,6 +164,8 @@
         }
 
         function closeResult() { document.getElementById('result-overlay').style.display = 'none'; }
+        
+        // 啟動遊戲
         renderLevel();
     </script>
 </body>
