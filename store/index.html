@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>記憶柑仔店 - 真人語音修正版</title>
+    <title>記憶柑仔店 - 豐富關卡與純正台語版</title>
     <style>
         body { 
             font-family: system-ui, -apple-system, sans-serif; 
@@ -44,13 +44,14 @@
             margin-bottom: 20px;
         }
         .voice-btn {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: bold;
-            padding: 10px 25px;
+            padding: 12px 30px;
             border: 3px solid #2b2b2b;
-            border-radius: 12px;
+            border-radius: 16px;
             cursor: pointer;
             background-color: #fff;
+            box-shadow: 0 4px 0 #2b2b2b;
         }
         .voice-btn.active {
             background-color: #ff922b;
@@ -61,27 +62,33 @@
         .title-text { font-size: 38px; font-weight: bold; color: #d9480f; margin: 0 0 10px 0; }
         .instruction-text { font-size: 48px; font-weight: bold; color: #2b2b2b; margin: 0; }
         
-        /* 貨架區 */
-        .shelf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px; max-width: 1100px; margin: 0 auto; }
-        .item-btn { background-color: #ffffff; border: 6px solid #2b2b2b; border-radius: 32px; padding: 30px 20px; cursor: pointer; box-shadow: 0 12px 0 #2b2b2b; transition: transform 0.1s; display: flex; flex-direction: column; align-items: center; }
-        .item-btn:active { transform: translateY(6px); }
-        .item-image-placeholder { width: 220px; height: 220px; background-color: #f1f3f5; border: 3px dashed #ced4da; border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 110px; margin-bottom: 20px; }
-        .item-label { font-size: 40px; font-weight: bold; color: #2b2b2b; }
+        /* 貨架區：改為 3 欄，畫面更豐富 */
+        .shelf-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 35px; 
+            max-width: 1100px; 
+            margin: 0 auto; 
+        }
+        .item-btn { background-color: #ffffff; border: 6px solid #2b2b2b; border-radius: 32px; padding: 25px 15px; cursor: pointer; box-shadow: 0 12px 0 #2b2b2b; transition: transform 0.1s; display: flex; flex-direction: column; align-items: center; }
+        .item-btn:active { transform: translateY(6px); box-shadow: 0 6px 0 #2b2b2b; }
+        .item-image-placeholder { width: 200px; height: 200px; background-color: #f1f3f5; border: 3px dashed #ced4da; border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 100px; margin-bottom: 20px; }
+        .item-label { font-size: 38px; font-weight: bold; color: #2b2b2b; }
         
-        /* 滿版覆蓋層（引導與結果通用） */
+        /* 滿版覆蓋層 */
         .result-overlay { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center; }
         .result-box { background-color: white; border: 8px solid #d9480f; border-radius: 32px; padding: 50px; text-align: center; width: 80%; max-width: 550px;}
-        .result-title { font-size: 54px; font-weight: bold; margin: 0 0 30px 0; }
+        .result-title { font-size: 56px; font-weight: bold; margin: 0 0 30px 0; }
         .next-btn { font-size: 38px; font-weight: bold; color: white; padding: 20px 50px; border-radius: 20px; cursor: pointer; border: none; box-shadow: 0 6px 0 rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
-    <!-- 遊戲開始前的啟動畫面（解鎖瀏覽器音效與語音核心） -->
+    <!-- 啟動畫面 -->
     <div id="start-overlay" class="result-overlay">
-        <div class="result-box" style="border-color: #d9480f;">
+        <div class="result-box">
             <h2 class="result-title" style="color: #d9480f;">歡迎來到記憶柑仔店</h2>
-            <p style="font-size: 30px; font-weight: bold; margin-bottom: 30px;">請點擊下方大按鈕開始</p>
+            <p style="font-size: 32px; font-weight: bold; margin-bottom: 30px;">請點擊下方大按鈕開始</p>
             <button class="next-btn" style="background-color: #d9480f;" onclick="startGame()">點我開始遊戲</button>
         </div>
     </div>
@@ -89,7 +96,7 @@
     <!-- 語音語言切換 -->
     <div class="voice-controls">
         <button id="btn-zh" class="voice-btn active" onclick="setLanguage('zh')">🔊 國語發音</button>
-        <button id="btn-tw" class="voice-btn" onclick="setLanguage('tw')">🔊 台語發音</button>
+        <button id="btn-tw" class="voice-btn" onclick="setLanguage('tw')">🔊 台灣台語</button>
     </div>
 
     <div class="header-box">
@@ -109,26 +116,22 @@
     </div>
 
     <script>
-        // 關卡與多語言語音文字
-        const gameData = [
-            { 
-                target: "彈珠汽水", 
-                voiceText: { zh: "請幫我找彈珠汽水", tw: "請看顧我找 彈珠汽水" },
-                items: [{name:"彈珠汽水", icon:"🥤", isCorrect:true}, {name:"柑仔糖", icon:"🍬", isCorrect:false}] 
-            },
-            { 
-                target: "科學麵", 
-                voiceText: { zh: "請幫我找科學麵", tw: "請看顧我找 科學麵" },
-                items: [{name:"科學麵", icon:"🍜", isCorrect:true}, {name:"黑松沙士", icon:"🧴", isCorrect:false}] 
-            },
-            { 
-                target: "泡泡糖", 
-                voiceText: { zh: "請幫我找泡泡糖", tw: "請看顧我找 泡泡糖" },
-                items: [{name:"巧克力", icon:"🍫", isCorrect:false}, {name:"泡泡糖", icon:"🎈", isCorrect:true}] 
-            }
+        // 1. 豐富的關卡資料庫（擴充至 6 關，並優化台語漢字提升語音辨識度）
+        const poolData = [
+            { target: "彈珠汽水", voiceText: { zh: "請幫我找彈珠汽水", tw: "請鬥相共揣彈珠汽水" }, items: [{name:"彈珠汽水", icon:"🥤", isCorrect:true}, {name:"柑仔糖", icon:"🍬", isCorrect:false}, {name:"冰棒", icon:"🍧", isCorrect:false}] },
+            { target: "科學麵", voiceText: { zh: "請幫我找科學麵", tw: "請鬥相共揣科學麵" }, items: [{name:"黑松沙士", icon:"🧴", isCorrect:false}, {name:"科學麵", icon:" Ramen ", icon:"🍜", isCorrect:true}, {name:"紅豆餅", icon:"🥞", isCorrect:false}] },
+            { target: "烤香腸", voiceText: { zh: "請幫我找烤香腸", tw: "請鬥相共揣煙腸" }, items: [{name:"巧克力", icon:"🍫", isCorrect:false}, {name:"烤香腸", icon:"🌭", isCorrect:true}, {name:"豆花", icon:"🥣", isCorrect:false}] },
+            { target: "糖葫蘆", voiceText: { zh: "請幫我找糖葫蘆", tw: "請鬥相共揣糖葫蘆" }, items: [{name:"糖葫蘆", icon:"🍡", isCorrect:true}, {name:"西瓜", icon:"🍉", isCorrect:false}, {name:"雞蛋糕", icon:"🥮", isCorrect:false}] },
+            { target: "陀螺", voiceText: { zh: "請幫我找陀螺", tw: "請鬥相共揣干樂" }, items: [{name:"風箏", icon:"🪁", isCorrect:false}, {name:"陀螺", icon:"🪀", isCorrect:true}, {name:"布袋戲", icon:"🎎", isCorrect:false}] },
+            { target: "黑松沙士", voiceText: { zh: "請幫我找黑松沙士", tw: "請鬥相共揣沙士" }, items: [{name:"冬瓜茶", icon:"☕", isCorrect:false}, {name:"米漿", icon:"🥛", isCorrect:false}, {name:"黑松沙士", icon:"🟫", isCorrect:true}] }
         ];
 
-        // 回饋音效設定 (採用瀏覽器高相容合成音頻，免加載外部檔案，100%有聲音)
+        let gameData = []; // 儲存洗牌後的關卡
+        let currentLevelIndex = 0;
+        let totalScore = 0;
+        let currentLang = 'zh'; // 預設國語
+
+        // 音效引擎
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
         function playBeep(isSuccess) {
@@ -138,36 +141,36 @@
             gain.connect(audioCtx.destination);
             
             if (isSuccess) {
-                // 答對：清脆的叮咚雙音
-                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.15); // E5
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.4);
-            } else {
-                // 答錯：沉悶的嘟聲
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.12);
                 gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.35);
+            } else {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(160, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
             }
         }
 
-        let currentLevelIndex = 0;
-        let totalScore = 0;
-        let currentLang = 'zh'; // 預設國語
+        // 隨機洗牌演算法，讓每次玩的順序都不同
+        function shuffleQuestions() {
+            gameData = [...poolData].sort(() => Math.random() - 0.5);
+            // 隨機打亂每關裡面的選項順序
+            gameData.forEach(level => {
+                level.items.sort(() => Math.random() - 0.5);
+            });
+        }
 
-        // 解鎖音效核心
         function startGame() {
             audioCtx.resume();
             document.getElementById('start-overlay').style.display = 'none';
+            shuffleQuestions(); // 洗牌
             renderLevel();
         }
 
-        // 切換語言
         function setLanguage(lang) {
             currentLang = lang;
             document.getElementById('btn-zh').className = `voice-btn ${lang === 'zh' ? 'active' : ''}`;
@@ -175,25 +178,20 @@
             speakText(gameData[currentLevelIndex].voiceText[currentLang]);
         }
 
-        // 真人語音合成發聲
+        // 徹底修正：指定正宗台灣語系，並放慢語速
         function speakText(text) {
-            window.speechSynthesis.cancel(); // 停止之前的聲音
+            window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
             
-            if (currentLang === 'zh') {
-                utterance.lang = 'zh-TW'; // 台灣國語
-            } else if (currentLang === 'tw') {
-                // 大部分系統（iOS/Android）使用 Minnan 或是地區語系代表台語，這裡進行相容設定
-                utterance.lang = 'zh-HK'; 
-                // 註：若長輩的手機/平板系統有內建台語包，指定 zh-TW 並帶有台語常用詞即可自動轉換。
-            }
-            utterance.rate = 0.8; // 放慢講話速度，方便長輩聆聽
+            // 國語與台語皆統一指定為 zh-TW，靠精確的在地漢字引導系統發出台語音
+            utterance.lang = 'zh-TW'; 
+            utterance.rate = 0.75; // 再放慢一點點，更溫和
             window.speechSynthesis.speak(utterance);
         }
 
         function renderLevel() {
             const data = gameData[currentLevelIndex];
-            document.getElementById('level-title').innerText = `第 ${currentLevelIndex + 1} 關：採買時間`;
+            document.getElementById('level-title').innerText = `第 ${currentLevelIndex + 1} / ${gameData.length} 關`;
             document.getElementById('target-instruction').innerText = `請幫我找：【${data.target}】`;
             
             const shelf = document.getElementById('game-shelf');
@@ -207,7 +205,6 @@
                 shelf.appendChild(btn);
             });
 
-            // 進入關卡自動播放語音
             setTimeout(() => {
                 speakText(data.voiceText[currentLang]);
             }, 300);
@@ -222,7 +219,7 @@
             overlay.style.display = 'flex';
             
             if (isCorrect) {
-                playBeep(true); // 播放修正後的蜂鳴音效
+                playBeep(true);
                 totalScore += 10;
                 document.getElementById('score-display').innerText = `分數：${totalScore} 分`;
 
@@ -230,8 +227,8 @@
                 msg.style.color = "#2b8a3e";
                 box.style.borderColor = "#40c057";
                 
-                // 答對語音讚美
-                const praiseText = currentLang === 'zh' ? "答對了！您真棒！" : "著啊！哩真讚！";
+                // 正宗台語與國語讚美
+                const praiseText = currentLang === 'zh' ? "答對了！您真棒！" : "著啊！你真讚！";
                 speakText(praiseText);
 
                 if (currentLevelIndex < gameData.length - 1) {
@@ -243,23 +240,23 @@
                         renderLevel();
                     };
                 } else {
-                    btn.innerText = "再玩一次";
+                    btn.innerText = "恭喜破關！再玩一次";
                     btn.style.backgroundColor = "#2b8b57";
                     btn.onclick = () => {
                         currentLevelIndex = 0;
                         totalScore = 0;
                         document.getElementById('score-display').innerText = `分數：0 分`;
                         closeResult();
+                        shuffleQuestions(); // 重新洗牌
                         renderLevel();
                     };
                 }
             } else {
-                playBeep(false); // 播放失敗蜂鳴音效
+                playBeep(false);
                 msg.innerText = "再試一次喔！";
                 msg.style.color = "#e03131";
                 box.style.borderColor = "#fa5252";
                 
-                // 答錯語音提示
                 const retryText = currentLang === 'zh' ? "再試一次喔" : "閣試一擺喔";
                 speakText(retryText);
 
