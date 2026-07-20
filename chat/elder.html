@@ -8,7 +8,7 @@
     * { box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; margin: 0; padding: 6px; background-color: #f0f8ff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
     
-    /* 問候語區塊，極簡風格 */
+    /* 問候語區塊 */
     .greeting-container { background: #fff3cd; border: 1px solid #ffeeba; padding: 8px; border-radius: 8px; margin-bottom: 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
     .greeting-text { font-size: 20px; font-weight: bold; color: #856404; line-height: 1.4; }
 
@@ -29,11 +29,20 @@
     .msg-elder { color: #0056b3; font-weight: bold; }
     .msg-young { color: #d9534f; font-weight: bold; }
 
-    .elder-img { max-width: 85%; max-height: 200px; border-radius: 8px; margin-top: 6px; display: block; border: 2px solid #ddd; }
+    /* ✨ 補回：照片縮圖與影片縮圖的樣式 */
+    .elder-img { max-width: 85%; max-height: 200px; border-radius: 8px; margin-top: 6px; display: block; border: 2px solid #ddd; cursor: zoom-in; }
     .yt-thumb-container { display: inline-block; position: relative; margin-top: 8px; max-width: 85%; border: 2px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); cursor: pointer; }
     .elder-yt-thumb { width: 100%; max-height: 200px; display: block; object-fit: cover; }
-    .yt-play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 42px; background: rgba(255, 0, 0, 0.9); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
-    .yt-play-icon::after { content: ''; display: block; border-style: solid; border-width: 10px 0 10px 18px; border-color: transparent transparent transparent white; margin-left: 4px; }
+    .yt-play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 42px; background: rgba(255, 0, 0, 0.9); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+    .yt-play-icon::after { content: ''; display: block; width: 0; height: 0; border-style: solid; border-width: 10px 0 10px 18px; border-color: transparent transparent transparent white; margin-left: 4px; }
+    .yt-thumb-container:active { transform: scale(0.98); }
+
+    /* 全螢幕燈箱彈出效果 */
+    .image-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); align-items: center; justify-content: center; }
+    .modal-content { max-width: 95%; max-height: 90vh; border-radius: 4px; display: none; }
+    .modal-video-container { width: 95%; max-width: 640px; aspect-ratio: 16 / 9; display: none; background: #000; }
+    .modal-video-container iframe { width: 100%; height: 100%; border: none; }
+    .close-modal { position: absolute; top: 20px; right: 25px; color: #fff; font-size: 40px; font-weight: bold; cursor: pointer; z-index: 10000; }
   </style>
 </head>
 <body>
@@ -54,13 +63,19 @@
 
   <div id="chat-box">載入對話...</div>
 
+  <!-- ✨ 補回：全螢幕放大照片或看影片的彈出視窗 HTML -->
+  <div id="imgModal" class="image-modal" onclick="closeModal()">
+    <span class="close-modal">&times;</span>
+    <img class="modal-content" id="modalTargetImg">
+    <div class="modal-video-container" id="modalVideoContainer"></div>
+  </div>
+
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzfE5zSvOVB0ppoS65Uq7k9AJMC6KmRSmnAO0_tP-3TScCeWgofvKWhPDUj85-Tpu8/exec"; 
+    const GAS_URL = "請換成你最新的GAS網址";
     const myName = "澎湖阿公";
     let isSending = false; 
     let currentGreeting = ""; 
 
-    // 多樣化問候語庫
     const greetingLibrary = {
       morning: ["早安啊阿公，祝您今天心情愉快！", "阿公早安！今天精神看起來不錯喔。", "早安，阿公吃早餐了嗎？"],
       noon: ["午安阿公，天氣熱要多喝水喔。", "阿公吃飽了嗎？記得休息一下。", "中午好！今天有沒有吃好吃的？"],
@@ -70,9 +85,7 @@
 
     window.onload = async function() {
       updateGreeting(); 
-      setTimeout(speakGreeting, 800); // 自動發音
-      
-      // 點擊觸發機制，防止瀏覽器阻擋自動播放
+      setTimeout(speakGreeting, 800); 
       document.addEventListener('click', speakGreeting, { once: true });
 
       loadPhrases(); 
@@ -94,7 +107,7 @@
 
     function speakGreeting() {
       if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel(); // 清除舊的語音
+        window.speechSynthesis.cancel(); 
         const utterance = new SpeechSynthesisUtterance(currentGreeting);
         const voices = window.speechSynthesis.getVoices();
         const mandarinVoice = voices.find(v => v.lang.includes('zh-TW'));
@@ -102,6 +115,46 @@
         utterance.rate = 0.85; 
         window.speechSynthesis.speak(utterance);
       }
+    }
+
+    // ✨ 補回：控制放大相片的函式
+    function zoomImage(src) {
+      document.getElementById("imgModal").style.display = "flex";
+      document.getElementById("modalTargetImg").style.display = "block";
+      document.getElementById("modalVideoContainer").style.display = "none";
+      document.getElementById("modalTargetImg").src = src;
+    }
+
+    // ✨ 補回：控制放大播放 YouTube 的函式
+    function zoomVideo(videoId) {
+      document.getElementById("imgModal").style.display = "flex";
+      document.getElementById("modalTargetImg").style.display = "none";
+      const videoContainer = document.getElementById("modalVideoContainer");
+      videoContainer.style.display = "block";
+      videoContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+    }
+
+    function closeModal() {
+      document.getElementById("imgModal").style.display = "none";
+      document.getElementById("modalVideoContainer").innerHTML = ""; 
+    }
+
+    // ✨ 補回：解析 YouTube 連結並回傳縮圖樣式的模板
+    function getYoutubeTemplate(url) {
+      let videoId = "";
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = url.match(regExp);
+      if (match && match[2].length === 11) {
+        videoId = match[2];
+      }
+      if (videoId) {
+        const thumbUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+        return `<br><div class="yt-thumb-container" onclick="zoomVideo('${videoId}')">
+                  <img class="elder-yt-thumb" src="${thumbUrl}">
+                  <div class="yt-play-icon"></div>
+                </div>`;
+      }
+      return `<br><a href="${url}" target="_blank">🔗 觀看影片</a>`;
     }
 
     function sendPhrase(clickedBtn, text) {
@@ -121,7 +174,7 @@
         clickedBtn.innerHTML = originalHTML; 
         setAllButtonsDisabled(false);        
         isSending = false;
-        // ✨ 新增：傳送後捲動到最上方
+        // 傳送後捲動到最上方（最新訊息）
         document.getElementById('chat-box').scrollTop = 0;
       });
     }
@@ -149,9 +202,23 @@
           if (isSending) return;
           var chatBox = document.getElementById('chat-box');
           chatBox.innerHTML = '';
+          
           messages.forEach(function(msg) {
             var cls = msg.role === '長輩' ? 'msg-elder' : 'msg-young';
-            chatBox.innerHTML += `<div class="msg-item"><span class="${cls}">[${msg.name}]:</span> ${msg.text}</div>`;
+            var displayText = msg.text;
+
+            // ✨ 補回並修正：圖片與 YouTube 縮圖判斷邏輯
+            if (displayText.startsWith('[B64IMG]')) {
+              var base64Data = displayText.replace('[B64IMG]', '').trim();
+              displayText = `<br><img class="elder-img" src="${base64Data}" onclick="zoomImage('${base64Data}')">`;
+            } else if (displayText.startsWith('[YT]')) {
+              var url = displayText.replace('[YT]', '').trim();
+              displayText = getYoutubeTemplate(url);
+            } else if (displayText.toLowerCase().includes('youtube.com/watch') || displayText.toLowerCase().includes('youtu.be/')) {
+              displayText = getYoutubeTemplate(displayText.trim());
+            }
+
+            chatBox.innerHTML += `<div class="msg-item"><span class="${cls}">[${msg.name}]:</span> ${displayText}</div>`;
           });
         });
     }
