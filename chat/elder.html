@@ -8,15 +8,21 @@
     * { box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; margin: 0; padding: 12px; background-color: #f0f8ff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
     h2 { color: #333; text-align: center; font-size: 24px; margin: 5px 0 0 0; }
-    .user-tag { text-align: center; color: #0056b3; font-weight: bold; margin-bottom: 10px; font-size: 18px; }
+    .user-tag { text-align: center; color: #0056b3; font-weight: bold; margin-bottom: 5px; font-size: 18px; }
     
+    /* 親切的時間語音問好區塊 */
+    .greeting-container { background: #fff3cd; border: 2px solid #ffeeba; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .greeting-text { font-size: 22px; font-weight: bold; color: #856404; flex-grow: 1; text-align: center; }
+    .voice-btn { background-color: #ffc107; border: none; font-size: 26px; padding: 8px 15px; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .voice-btn:active { background-color: #e0a800; transform: scale(1.1); }
+
     .btn-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
     .phrase-btn { background-color: #4CAF50; color: white; border: none; padding: 14px 4px; font-size: 5.5vw; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s; }
     @media (min-width: 480px) { .phrase-btn { font-size: 20px; } }
     .phrase-btn:active { background-color: #3e8e41; }
     
-    /* ✨ 新增：按鈕停用（被鎖定）時的樣式，變灰色並移除陰影，讓阿公一眼看出不能按 */
-    .phrase-btn:disabled, .emoji-btn:disabled { background-color: #cccccc !important; color: #666666 !important; opacity: 0.6; cursor: not-allowed; box-shadow: none; transform: none; }
+    /* 防呆停用樣式 */
+    .phrase-btn:disabled, .emoji-btn:disabled, .voice-btn:disabled { background-color: #cccccc !important; color: #666666 !important; opacity: 0.6; cursor: not-allowed; box-shadow: none; transform: none; }
 
     .emoji-container { background: #e6f2ff; padding: 8px; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-around; }
     .emoji-title { font-size: 15px; color: #555; font-weight: bold; }
@@ -24,8 +30,9 @@
     .emoji-btn:active { transform: scale(1.3); }
 
     #chat-box { border: 2px solid #ccc; background: white; padding: 10px; flex-grow: 1; overflow-y: auto; border-radius: 8px; margin-bottom: 5px; }
-    .msg-item { padding: 10px 0; border-bottom: 1px solid #eee; font-size: 22px; line-height: 1.5; }
-    .msg-time { color: #999; font-size: 14px; margin-right: 5px; }
+    
+    /* ✨ 最佳化：對話框樣式，徹底移除時間和日期的留白，讓大字體向左靠齊 */
+    .msg-item { padding: 12px 0; border-bottom: 1px solid #eee; font-size: 24px; line-height: 1.5; word-break: break-all; }
     .msg-elder { color: #0056b3; font-weight: bold; }
     .msg-young { color: #d9534f; font-weight: bold; }
 
@@ -51,6 +58,12 @@
   <h2>聊天室 💬</h2>
   <div class="user-tag">👴 澎湖阿公</div>
   
+  <!-- 依照不同時間自動生成的語音問好區塊 -->
+  <div class="greeting-container">
+    <div id="greeting-box" class="greeting-text">正在確認時間...</div>
+    <button id="speak-btn" class="voice-btn" onclick="speakGreeting()">🔊</button>
+  </div>
+  
   <div class="btn-container" id="phrase-buttons">載入中...</div>
 
   <div class="emoji-container">
@@ -70,12 +83,15 @@
   </div>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzfE5zSvOVB0ppoS65Uq7k9AJMC6KmRSmnAO0_tP-3TScCeWgofvKWhPDUj85-Tpu8/exec";
+    const GAS_URL = "請換成你最新的GAS網址";
     const myName = "澎湖阿公";
     let userIP = "未知 IP";
-    let isSending = false; // ✨ 追蹤狀態：是否正在傳送中
+    let isSending = false; 
+    let currentGreeting = "阿公您好！"; 
 
     window.onload = async function() {
+      updateGreeting(); 
+      
       try {
         let res = await fetch('https://api.ipify.org?format=json');
         let data = await res.json();
@@ -86,6 +102,40 @@
       loadMessages();
       setInterval(loadMessages, 4000);
     };
+
+    function updateGreeting() {
+      const hour = new Date().getHours();
+      let msg = "";
+      
+      if (hour >= 5 && hour < 11) {
+        msg = "阿公！敖早、早安！☀️"; 
+      } else if (hour >= 11 && hour < 14) {
+        msg = "阿公！下晝好、飽未？🍱"; 
+      } else if (hour >= 14 && hour < 18) {
+        msg = "阿公！下午好、來喝茶！🍵"; 
+      } else {
+        msg = "阿公！暗安、早點休息喔！🌙"; 
+      }
+      
+      currentGreeting = msg;
+      document.getElementById("greeting-box").innerText = msg;
+    }
+
+    function speakGreeting() {
+      if ('speechSynthesis' in window) {
+        const cleanText = currentGreeting.replace(/[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff]/g, '');
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        const voices = window.speechSynthesis.getVoices();
+        const targetVoice = voices.find(v => v.lang.includes('zh-TW') || v.lang.includes('nan') || v.lang.includes('zh-HK'));
+        if (targetVoice) utterance.voice = targetVoice;
+        
+        utterance.rate = 0.85; 
+        utterance.pitch = 1.0; 
+        window.speechSynthesis.speak(utterance);
+      } else {
+        alert("這台手機不支援語音功能");
+      }
+    }
 
     function zoomImage(src) {
       document.getElementById("imgModal").style.display = "flex";
@@ -132,32 +182,27 @@
           if (!phrases || phrases.length === 0) { container.innerHTML = '未設定'; return; }
           container.innerHTML = '';
           phrases.slice(0, 6).forEach(text => {
-            // ✨ 這裡將整個按鈕物件 (this) 傳入 sendPhrase
             container.innerHTML += `<button class="phrase-btn" onclick="sendPhrase(this, '${text}')">${text}</button>`;
           });
         });
     }
 
-    // ✨ 新增核心防呆機制：傳送時鎖定所有按鈕
     function setAllButtonsDisabled(disabledState) {
-      // 鎖定/解鎖所有常用詞按鈕
       const phraseBtns = document.querySelectorAll('.phrase-btn');
       phraseBtns.forEach(btn => btn.disabled = disabledState);
       
-      // 鎖定/解鎖所有大貼圖按鈕
       const emojiBtns = document.querySelectorAll('.emoji-btn');
       emojiBtns.forEach(btn => btn.disabled = disabledState);
+      
+      document.getElementById('speak-btn').disabled = disabledState;
     }
 
-    // ✨ 修改：加入 clickedBtn 參數，精準控制當前按鈕的文字提示
     function sendPhrase(clickedBtn, text) {
-      // 防呆保護：如果已經在傳送中，直接攔截不反應
       if (isSending) return;
       
       isSending = true;
-      setAllButtonsDisabled(true); // 鎖定畫面上所有的按鈕，變灰色
+      setAllButtonsDisabled(true); 
 
-      // 備份原本按鈕內的內容（字詞或貼圖），並把按鈕字改為「傳送中」
       const originalHTML = clickedBtn.innerHTML;
       if (!['👍','❤️','😂','🙏'].includes(text)) {
         clickedBtn.innerText = "傳送中...";
@@ -170,10 +215,9 @@
       .then(() => loadMessages())
       .catch(err => console.error("傳送失敗:", err))
       .finally(() => {
-        // 傳送完畢後（無論成功或失敗）
-        clickedBtn.innerHTML = originalHTML; // 還原按鈕本來的字或貼圖
-        setAllButtonsDisabled(false);        // 解鎖所有按鈕，顏色恢復正常
-        isSending = false;                   // 解除鎖定狀態
+        clickedBtn.innerHTML = originalHTML; 
+        setAllButtonsDisabled(false);        
+        isSending = false;                   
       });
     }
 
@@ -184,7 +228,6 @@
           var chatBox = document.getElementById('chat-box');
           if (!messages || messages.length === 0) { chatBox.innerHTML = '目前沒有對話紀錄'; return; }
           
-          // 如果阿公正在傳訊息，先不要刷新對話框，避免干擾網頁視覺
           if (isSending) return;
 
           chatBox.innerHTML = '';
@@ -202,7 +245,8 @@
               displayText = getYoutubeTemplate(displayText.trim());
             }
 
-            chatBox.innerHTML += `<div class="msg-item"><span class="msg-time">${msg.time}</span> <span class="${cls}">[${msg.name}]:</span> ${displayText}</div>`;
+            // ✨ 修改：連同舊程式碼中可能殘留的時間、日期代碼完全忽略，只保留姓名和文字。
+            chatBox.innerHTML += `<div class="msg-item"><span class="${cls}">[${msg.name}]:</span> ${displayText}</div>`;
           });
         });
     }
