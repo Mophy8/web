@@ -6,179 +6,124 @@
   <title>澎湖阿公聊天室</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; margin: 0; padding: 8px; background-color: #f0f8ff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-    h2 { color: #333; text-align: center; font-size: 22px; margin: 2px 0; }
-    .user-tag { text-align: center; color: #0056b3; font-weight: bold; margin-bottom: 4px; font-size: 16px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; margin: 0; padding: 6px; background-color: #f0f8ff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
     
-    /* ✨ 修改：問候語區塊靠上緊湊，移除多餘間距與按鈕空間 */
-    .greeting-container { background: #fff3cd; border: 1px solid #ffeeba; padding: 6px; border-radius: 6px; margin-bottom: 6px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .greeting-text { font-size: 20px; font-weight: bold; color: #856404; }
+    /* 問候語區塊，極簡風格 */
+    .greeting-container { background: #fff3cd; border: 1px solid #ffeeba; padding: 8px; border-radius: 8px; margin-bottom: 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .greeting-text { font-size: 20px; font-weight: bold; color: #856404; line-height: 1.4; }
 
     .btn-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 6px; }
-    .phrase-btn { background-color: #4CAF50; color: white; border: none; padding: 12px 4px; font-size: 5.5vw; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s; }
-    @media (min-width: 480px) { .phrase-btn { font-size: 20px; } }
-    .phrase-btn:active { background-color: #3e8e41; }
+    .phrase-btn { background-color: #4CAF50; color: white; border: none; padding: 12px 4px; font-size: 5vw; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s; }
+    .phrase-btn:active { background-color: #3e8e41; transform: scale(0.98); }
     
-    /* 防呆停用樣式 */
-    .phrase-btn:disabled, .emoji-btn:disabled { background-color: #cccccc !important; color: #666666 !important; opacity: 0.6; cursor: not-allowed; box-shadow: none; transform: none; }
+    .phrase-btn:disabled, .emoji-btn:disabled { background-color: #cccccc !important; color: #666666 !important; opacity: 0.6; cursor: not-allowed; box-shadow: none; }
 
-    .emoji-container { background: #e6f2ff; padding: 6px; border-radius: 8px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-around; }
+    .emoji-container { background: #e6f2ff; padding: 6px; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-around; }
     .emoji-title { font-size: 14px; color: #555; font-weight: bold; }
-    .emoji-btn { font-size: 30px; background: none; border: none; cursor: pointer; padding: 0 4px; transition: all 0.2s; border-radius: 6px; }
+    .emoji-btn { font-size: 28px; background: none; border: none; cursor: pointer; padding: 0 4px; transition: all 0.2s; border-radius: 6px; }
     .emoji-btn:active { transform: scale(1.3); }
 
     #chat-box { border: 2px solid #ccc; background: white; padding: 8px; flex-grow: 1; overflow-y: auto; border-radius: 8px; margin-bottom: 2px; }
     
-    /* 對話框樣式，徹底移除時間和日期的留白，字體放大 */
     .msg-item { padding: 10px 0; border-bottom: 1px solid #eee; font-size: 24px; line-height: 1.5; word-break: break-all; }
     .msg-elder { color: #0056b3; font-weight: bold; }
     .msg-young { color: #d9534f; font-weight: bold; }
 
-    .elder-img { max-width: 85%; max-height: 200px; border-radius: 8px; margin-top: 6px; display: block; border: 2px solid #ddd; cursor: zoom-in; }
-    
-    /* YouTube 影片縮圖樣式 */
+    .elder-img { max-width: 85%; max-height: 200px; border-radius: 8px; margin-top: 6px; display: block; border: 2px solid #ddd; }
     .yt-thumb-container { display: inline-block; position: relative; margin-top: 8px; max-width: 85%; border: 2px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); cursor: pointer; }
     .elder-yt-thumb { width: 100%; max-height: 200px; display: block; object-fit: cover; }
-    .yt-play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 42px; background: rgba(255, 0, 0, 0.9); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-    .yt-play-icon::after { content: ''; display: block; width: 0; height: 0; border-style: solid; border-width: 10px 0 10px 18px; border-color: transparent transparent transparent white; margin-left: 4px; }
-    .yt-thumb-container:active { transform: scale(0.98); }
-
-    /* 全螢幕燈箱效果 */
-    .image-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); align-items: center; justify-content: center; }
-    .modal-content { max-width: 95%; max-height: 90vh; border-radius: 4px; display: none; }
-    .modal-video-container { width: 95%; max-width: 640px; aspect-ratio: 16 / 9; display: none; background: #000; }
-    .modal-video-container iframe { width: 100%; height: 100%; border: none; }
-    .close-modal { position: absolute; top: 20px; right: 25px; color: #fff; font-size: 40px; font-weight: bold; cursor: pointer; z-index: 10000; }
+    .yt-play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 42px; background: rgba(255, 0, 0, 0.9); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    .yt-play-icon::after { content: ''; display: block; border-style: solid; border-width: 10px 0 10px 18px; border-color: transparent transparent transparent white; margin-left: 4px; }
   </style>
 </head>
 <body>
 
-  <h2>聊天室 💬</h2>
-  <!-- <div class="user-tag">👴 澎湖阿公</div> -->
-  
-  <!-- 上方保持清單靠上，移除按鈕 -->
   <div class="greeting-container">
-    <div id="greeting-box" class="greeting-text">正在確認時間...</div>
+    <div id="greeting-box" class="greeting-text">早安！阿公好。</div>
   </div>
   
-  <div class="btn-container" id="phrase-buttons">載入中...</div>
+  <div class="btn-container" id="phrase-buttons">讀取中...</div>
 
   <div class="emoji-container">
-    <div class="emoji-title">大貼圖：</div>
+    <div class="emoji-title">傳個表情：</div>
     <button class="emoji-btn" onclick="sendPhrase(this, '👍')">👍</button>
     <button class="emoji-btn" onclick="sendPhrase(this, '❤️')">❤️</button>
     <button class="emoji-btn" onclick="sendPhrase(this, '😂')">😂</button>
     <button class="emoji-btn" onclick="sendPhrase(this, '🙏')">🙏</button>
   </div>
 
-  <div id="chat-box">載入對話中...</div>
-
-  <div id="imgModal" class="image-modal" onclick="closeModal()">
-    <span class="close-modal">&times;</span>
-    <img class="modal-content" id="modalTargetImg">
-    <div class="modal-video-container" id="modalVideoContainer"></div>
-  </div>
+  <div id="chat-box">載入對話...</div>
 
   <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzfE5zSvOVB0ppoS65Uq7k9AJMC6KmRSmnAO0_tP-3TScCeWgofvKWhPDUj85-Tpu8/exec"; 
+    const GAS_URL = "請換成你最新的GAS網址";
     const myName = "澎湖阿公";
-    let userIP = "未知 IP";
     let isSending = false; 
-    let currentGreeting = "阿公您好！"; 
+    let currentGreeting = ""; 
+
+    // 多樣化問候語庫
+    const greetingLibrary = {
+      morning: ["早安啊阿公，祝您今天心情愉快！", "阿公早安！今天精神看起來不錯喔。", "早安，阿公吃早餐了嗎？"],
+      noon: ["午安阿公，天氣熱要多喝水喔。", "阿公吃飽了嗎？記得休息一下。", "中午好！今天有沒有吃好吃的？"],
+      afternoon: ["下午好啊阿公，起來喝口茶吧。", "阿公下午精神好嗎？去外面走走嗎？", "下午好，放鬆心情喔。"],
+      night: ["阿公晚安，該休息囉，祝您好夢。", "晚上好，早點睡對身體好喔。", "阿公晚安！明天見。"]
+    };
 
     window.onload = async function() {
       updateGreeting(); 
+      setTimeout(speakGreeting, 800); // 自動發音
       
-      // ✨ 網頁載入完成後，直接啟動背景語音發音
-      setTimeout(speakGreeting, 500);
-      
-      try {
-        let res = await fetch('https://api.ipify.org?format=json');
-        let data = await res.json();
-        userIP = data.ip;
-      } catch (e) { console.log("無法獲取 IP"); }
-      
+      // 點擊觸發機制，防止瀏覽器阻擋自動播放
+      document.addEventListener('click', speakGreeting, { once: true });
+
       loadPhrases(); 
       loadMessages();
       setInterval(loadMessages, 4000);
     };
 
-    // ✨ 修改：問候語全面換成溫馨的國語詞彙
     function updateGreeting() {
       const hour = new Date().getHours();
-      let msg = "";
+      let pool = [];
+      if (hour >= 5 && hour < 11) pool = greetingLibrary.morning;
+      else if (hour >= 11 && hour < 14) pool = greetingLibrary.noon;
+      else if (hour >= 14 && hour < 18) pool = greetingLibrary.afternoon;
+      else pool = greetingLibrary.night;
       
-      if (hour >= 5 && hour < 11) {
-        msg = "阿公！早上好、祝您今天順心！☀️"; 
-      } else if (hour >= 11 && hour < 14) {
-        msg = "阿公！中午好、飯吃飽了嗎？🍱"; 
-      } else if (hour >= 14 && hour < 18) {
-        msg = "阿公！下午好、喝杯茶休息一下！🍵"; 
-      } else {
-        msg = "阿公！晚上好、早點休息喔！🌙"; 
-      }
-      
-      currentGreeting = msg;
-      document.getElementById("greeting-box").innerText = msg;
+      currentGreeting = pool[Math.floor(Math.random() * pool.length)];
+      document.getElementById("greeting-box").innerText = currentGreeting;
     }
 
-    // ✨ 修改：強制鎖定國語語音，且不需按鈕即可在背景直接播放
     function speakGreeting() {
       if ('speechSynthesis' in window) {
-        // 移除圖標，保留乾淨的純文字供語音讀取
-        const cleanText = currentGreeting.replace(/[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff]/g, '');
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        
-        // ✨ 精準鎖定臺灣國語發音 (zh-TW)
+        window.speechSynthesis.cancel(); // 清除舊的語音
+        const utterance = new SpeechSynthesisUtterance(currentGreeting);
         const voices = window.speechSynthesis.getVoices();
         const mandarinVoice = voices.find(v => v.lang.includes('zh-TW'));
         if (mandarinVoice) utterance.voice = mandarinVoice;
-        
-        utterance.rate = 0.85; // 語速微調慢，長輩聽得更清晰
-        utterance.pitch = 1.0; 
+        utterance.rate = 0.85; 
         window.speechSynthesis.speak(utterance);
       }
     }
 
-    // 瀏覽器安全機制補充：有些手機（如 iPhone 或是某些版本的 Android Chrome）
-    // 為了防止網頁廣告干擾，會禁止「完全無互動的自動網頁發音」。
-    // 萬一阿公的手機遇到這種限制，只要他點擊畫面上「任何一個按鈕」傳送訊息時，語音功能就會自動解鎖，並在下一次開啟時順暢自動播放。
+    function sendPhrase(clickedBtn, text) {
+      if (isSending) return;
+      isSending = true;
+      setAllButtonsDisabled(true); 
 
-    function zoomImage(src) {
-      document.getElementById("imgModal").style.display = "flex";
-      document.getElementById("modalTargetImg").style.display = "block";
-      document.getElementById("modalVideoContainer").style.display = "none";
-      document.getElementById("modalTargetImg").src = src;
-    }
+      const originalHTML = clickedBtn.innerHTML;
+      if (!['👍','❤️','😂','🙏'].includes(text)) clickedBtn.innerText = "傳送中...";
 
-    function zoomVideo(videoId) {
-      document.getElementById("imgModal").style.display = "flex";
-      document.getElementById("modalTargetImg").style.display = "none";
-      const videoContainer = document.getElementById("modalVideoContainer");
-      videoContainer.style.display = "block";
-      videoContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
-    }
-
-    function closeModal() {
-      document.getElementById("imgModal").style.display = "none";
-      document.getElementById("modalVideoContainer").innerHTML = ""; 
-    }
-
-    function getYoutubeTemplate(url) {
-      let videoId = "";
-      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-      const match = url.match(regExp);
-      if (match && match[2].length === 11) {
-        videoId = match[2];
-      }
-      if (videoId) {
-        const thumbUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-        return `<br><div class="yt-thumb-container" onclick="zoomVideo('${videoId}')">
-                  <img class="elder-yt-thumb" src="${thumbUrl}">
-                  <div class="yt-play-icon"></div>
-                </div>`;
-      }
-      return `<br><a href="${url}" target="_blank">🔗 觀看影片</a>`;
+      fetch(GAS_URL, {
+        method: "POST",
+        body: JSON.stringify({ role: "長輩", name: myName, message: text })
+      })
+      .then(() => loadMessages())
+      .finally(() => {
+        clickedBtn.innerHTML = originalHTML; 
+        setAllButtonsDisabled(false);        
+        isSending = false;
+        // ✨ 新增：傳送後捲動到最上方
+        document.getElementById('chat-box').scrollTop = 0;
+      });
     }
 
     function loadPhrases() {
@@ -186,7 +131,6 @@
         .then(res => res.json())
         .then(phrases => {
           const container = document.getElementById('phrase-buttons');
-          if (!phrases || phrases.length === 0) { container.innerHTML = '未設定'; return; }
           container.innerHTML = '';
           phrases.slice(0, 6).forEach(text => {
             container.innerHTML += `<button class="phrase-btn" onclick="sendPhrase(this, '${text}')">${text}</button>`;
@@ -194,63 +138,20 @@
         });
     }
 
-    function setAllButtonsDisabled(disabledState) {
-      const phraseBtns = document.querySelectorAll('.phrase-btn');
-      phraseBtns.forEach(btn => btn.disabled = disabledState);
-      
-      const emojiBtns = document.querySelectorAll('.emoji-btn');
-      emojiBtns.forEach(btn => btn.disabled = disabledState);
-    }
-
-    function sendPhrase(clickedBtn, text) {
-      if (isSending) return;
-      
-      isSending = true;
-      setAllButtonsDisabled(true); 
-
-      const originalHTML = clickedBtn.innerHTML;
-      if (!['👍','❤️','😂','🙏'].includes(text)) {
-        clickedBtn.innerText = "傳送中...";
-      }
-
-      fetch(GAS_URL, {
-        method: "POST",
-        body: JSON.stringify({ role: "長輩", name: myName, message: text, ip: userIP })
-      })
-      .then(() => loadMessages())
-      .catch(err => console.error("傳送失敗:", err))
-      .finally(() => {
-        clickedBtn.innerHTML = originalHTML; 
-        setAllButtonsDisabled(false);        
-        isSending = false;                   
-      });
+    function setAllButtonsDisabled(state) {
+      document.querySelectorAll('.phrase-btn, .emoji-btn').forEach(btn => btn.disabled = state);
     }
 
     function loadMessages() {
       fetch(GAS_URL)
         .then(res => res.json())
         .then(messages => {
-          var chatBox = document.getElementById('chat-box');
-          if (!messages || messages.length === 0) { chatBox.innerHTML = '目前沒有對話紀錄'; return; }
-          
           if (isSending) return;
-
+          var chatBox = document.getElementById('chat-box');
           chatBox.innerHTML = '';
           messages.forEach(function(msg) {
             var cls = msg.role === '長輩' ? 'msg-elder' : 'msg-young';
-            var displayText = msg.text;
-
-            if (displayText.startsWith('[B64IMG]')) {
-              var base64Data = displayText.replace('[B64IMG]', '').trim();
-              displayText = `<br><img class="elder-img" src="${base64Data}" onclick="zoomImage('${base64Data}')">`;
-            } else if (displayText.startsWith('[YT]')) {
-              var url = displayText.replace('[YT]', '').trim();
-              displayText = getYoutubeTemplate(url);
-            } else if (displayText.toLowerCase().includes('youtube.com/watch') || displayText.toLowerCase().includes('youtu.be/')) {
-              displayText = getYoutubeTemplate(displayText.trim());
-            }
-
-            chatBox.innerHTML += `<div class="msg-item"><span class="${cls}">[${msg.name}]:</span> ${displayText}</div>`;
+            chatBox.innerHTML += `<div class="msg-item"><span class="${cls}">[${msg.name}]:</span> ${msg.text}</div>`;
           });
         });
     }
