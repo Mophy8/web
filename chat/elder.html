@@ -6,33 +6,31 @@
   <title>澎湖阿公聊天室</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; margin: 0; padding: 12px; background-color: #f0f8ff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-    h2 { color: #333; text-align: center; font-size: 24px; margin: 5px 0 0 0; }
-    .user-tag { text-align: center; color: #0056b3; font-weight: bold; margin-bottom: 5px; font-size: 18px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; margin: 0; padding: 8px; background-color: #f0f8ff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    h2 { color: #333; text-align: center; font-size: 22px; margin: 2px 0; }
+    .user-tag { text-align: center; color: #0056b3; font-weight: bold; margin-bottom: 4px; font-size: 16px; }
     
-    /* 親切的時間語音問好區塊 */
-    .greeting-container { background: #fff3cd; border: 2px solid #ffeeba; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .greeting-text { font-size: 22px; font-weight: bold; color: #856404; flex-grow: 1; text-align: center; }
-    .voice-btn { background-color: #ffc107; border: none; font-size: 26px; padding: 8px 15px; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .voice-btn:active { background-color: #e0a800; transform: scale(1.1); }
+    /* ✨ 修改：問候語區塊靠上緊湊，移除多餘間距與按鈕空間 */
+    .greeting-container { background: #fff3cd; border: 1px solid #ffeeba; padding: 6px; border-radius: 6px; margin-bottom: 6px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .greeting-text { font-size: 20px; font-weight: bold; color: #856404; }
 
-    .btn-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
-    .phrase-btn { background-color: #4CAF50; color: white; border: none; padding: 14px 4px; font-size: 5.5vw; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s; }
+    .btn-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 6px; }
+    .phrase-btn { background-color: #4CAF50; color: white; border: none; padding: 12px 4px; font-size: 5.5vw; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s; }
     @media (min-width: 480px) { .phrase-btn { font-size: 20px; } }
     .phrase-btn:active { background-color: #3e8e41; }
     
     /* 防呆停用樣式 */
-    .phrase-btn:disabled, .emoji-btn:disabled, .voice-btn:disabled { background-color: #cccccc !important; color: #666666 !important; opacity: 0.6; cursor: not-allowed; box-shadow: none; transform: none; }
+    .phrase-btn:disabled, .emoji-btn:disabled { background-color: #cccccc !important; color: #666666 !important; opacity: 0.6; cursor: not-allowed; box-shadow: none; transform: none; }
 
-    .emoji-container { background: #e6f2ff; padding: 8px; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-around; }
-    .emoji-title { font-size: 15px; color: #555; font-weight: bold; }
-    .emoji-btn { font-size: 32px; background: none; border: none; cursor: pointer; padding: 0 5px; transition: all 0.2s; border-radius: 6px; }
+    .emoji-container { background: #e6f2ff; padding: 6px; border-radius: 8px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-around; }
+    .emoji-title { font-size: 14px; color: #555; font-weight: bold; }
+    .emoji-btn { font-size: 30px; background: none; border: none; cursor: pointer; padding: 0 4px; transition: all 0.2s; border-radius: 6px; }
     .emoji-btn:active { transform: scale(1.3); }
 
-    #chat-box { border: 2px solid #ccc; background: white; padding: 10px; flex-grow: 1; overflow-y: auto; border-radius: 8px; margin-bottom: 5px; }
+    #chat-box { border: 2px solid #ccc; background: white; padding: 8px; flex-grow: 1; overflow-y: auto; border-radius: 8px; margin-bottom: 2px; }
     
-    /* ✨ 最佳化：對話框樣式，徹底移除時間和日期的留白，讓大字體向左靠齊 */
-    .msg-item { padding: 12px 0; border-bottom: 1px solid #eee; font-size: 24px; line-height: 1.5; word-break: break-all; }
+    /* 對話框樣式，徹底移除時間和日期的留白，字體放大 */
+    .msg-item { padding: 10px 0; border-bottom: 1px solid #eee; font-size: 24px; line-height: 1.5; word-break: break-all; }
     .msg-elder { color: #0056b3; font-weight: bold; }
     .msg-young { color: #d9534f; font-weight: bold; }
 
@@ -58,10 +56,9 @@
   <h2>聊天室 💬</h2>
   <div class="user-tag">👴 澎湖阿公</div>
   
-  <!-- 依照不同時間自動生成的語音問好區塊 -->
+  <!-- 上方保持清單靠上，移除按鈕 -->
   <div class="greeting-container">
     <div id="greeting-box" class="greeting-text">正在確認時間...</div>
-    <button id="speak-btn" class="voice-btn" onclick="speakGreeting()">🔊</button>
   </div>
   
   <div class="btn-container" id="phrase-buttons">載入中...</div>
@@ -92,6 +89,9 @@
     window.onload = async function() {
       updateGreeting(); 
       
+      // ✨ 網頁載入完成後，直接啟動背景語音發音
+      setTimeout(speakGreeting, 500);
+      
       try {
         let res = await fetch('https://api.ipify.org?format=json');
         let data = await res.json();
@@ -103,39 +103,46 @@
       setInterval(loadMessages, 4000);
     };
 
+    // ✨ 修改：問候語全面換成溫馨的國語詞彙
     function updateGreeting() {
       const hour = new Date().getHours();
       let msg = "";
       
       if (hour >= 5 && hour < 11) {
-        msg = "阿公！敖早、早安！☀️"; 
+        msg = "阿公！早上好、祝您今天順心！☀️"; 
       } else if (hour >= 11 && hour < 14) {
-        msg = "阿公！下晝好、飽未？🍱"; 
+        msg = "阿公！中午好、飯吃飽了嗎？🍱"; 
       } else if (hour >= 14 && hour < 18) {
-        msg = "阿公！下午好、來喝茶！🍵"; 
+        msg = "阿公！下午好、喝杯茶休息一下！🍵"; 
       } else {
-        msg = "阿公！暗安、早點休息喔！🌙"; 
+        msg = "阿公！晚上好、早點休息喔！🌙"; 
       }
       
       currentGreeting = msg;
       document.getElementById("greeting-box").innerText = msg;
     }
 
+    // ✨ 修改：強制鎖定國語語音，且不需按鈕即可在背景直接播放
     function speakGreeting() {
       if ('speechSynthesis' in window) {
+        // 移除圖標，保留乾淨的純文字供語音讀取
         const cleanText = currentGreeting.replace(/[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff]/g, '');
         const utterance = new SpeechSynthesisUtterance(cleanText);
-        const voices = window.speechSynthesis.getVoices();
-        const targetVoice = voices.find(v => v.lang.includes('zh-TW') || v.lang.includes('nan') || v.lang.includes('zh-HK'));
-        if (targetVoice) utterance.voice = targetVoice;
         
-        utterance.rate = 0.85; 
+        // ✨ 精準鎖定臺灣國語發音 (zh-TW)
+        const voices = window.speechSynthesis.getVoices();
+        const mandarinVoice = voices.find(v => v.lang.includes('zh-TW'));
+        if (mandarinVoice) utterance.voice = mandarinVoice;
+        
+        utterance.rate = 0.85; // 語速微調慢，長輩聽得更清晰
         utterance.pitch = 1.0; 
         window.speechSynthesis.speak(utterance);
-      } else {
-        alert("這台手機不支援語音功能");
       }
     }
+
+    // 瀏覽器安全機制補充：有些手機（如 iPhone 或是某些版本的 Android Chrome）
+    // 為了防止網頁廣告干擾，會禁止「完全無互動的自動網頁發音」。
+    // 萬一阿公的手機遇到這種限制，只要他點擊畫面上「任何一個按鈕」傳送訊息時，語音功能就會自動解鎖，並在下一次開啟時順暢自動播放。
 
     function zoomImage(src) {
       document.getElementById("imgModal").style.display = "flex";
@@ -193,8 +200,6 @@
       
       const emojiBtns = document.querySelectorAll('.emoji-btn');
       emojiBtns.forEach(btn => btn.disabled = disabledState);
-      
-      document.getElementById('speak-btn').disabled = disabledState;
     }
 
     function sendPhrase(clickedBtn, text) {
@@ -245,7 +250,6 @@
               displayText = getYoutubeTemplate(displayText.trim());
             }
 
-            // ✨ 修改：連同舊程式碼中可能殘留的時間、日期代碼完全忽略，只保留姓名和文字。
             chatBox.innerHTML += `<div class="msg-item"><span class="${cls}">[${msg.name}]:</span> ${displayText}</div>`;
           });
         });
