@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的桌面療癒小寵物 - 光之靈</title>
+  <style>
+    :root {
+      --bg-color: #1a1c29;
+      --card-bg: rgba(255, 255, 255, 0.07);
+      --accent-color: #a8eecc;
+      --text-color: #f0f4f8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .container {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 30px;
+      width: 340px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      position: relative;
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      letter-spacing: 2px;
+      margin-bottom: 5px;
+      color: var(--accent-color);
+      font-weight: 400;
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      opacity: 0.6;
+      margin-bottom: 25px;
+    }
+
+    /* 寵物本體與動畫 */
+    .pet-stage {
+      height: 180px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .pet {
+      width: 100px;
+      height: 100px;
+      background: radial-gradient(circle at 30% 30%, #a8eecc, #64b5f6);
+      border-radius: 50%;
+      box-shadow: 0 0 30px rgba(168, 238, 204, 0.6);
+      position: relative;
+      animation: float 4s ease-in-out infinite;
+      transition: transform 0.2s ease, filter 0.3s ease;
+    }
+
+    .pet:active {
+      transform: scale(0.95);
+    }
+
+    .pet-face {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .eye {
+      width: 10px;
+      height: 10px;
+      background-color: #1a1c29;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .mouth {
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 6px;
+      border-bottom: 2px solid #1a1c29;
+      border-radius: 0 0 10px 10px;
+      transition: all 0.3s ease;
+    }
+
+    /* 浮動呼吸動畫 */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) scale(1); }
+      50% { transform: translateY(-12px) scale(1.03); }
+    }
+
+    /* 心愛/愛心漂浮特效 */
+    .heart {
+      position: absolute;
+      font-size: 1.2rem;
+      color: #ff80ab;
+      pointer-events: none;
+      animation: popUp 1s ease-out forwards;
+    }
+
+    @keyframes popUp {
+      0% { opacity: 1; transform: translateY(0) scale(0.8); }
+      100% { opacity: 0; transform: translateY(-50px) scale(1.3); }
+    }
+
+    /* 狀態數據列 */
+    .stats {
+      margin: 20px 0;
+      text-align: left;
+    }
+
+    .stat-bar {
+      margin-bottom: 12px;
+    }
+
+    .stat-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+      opacity: 0.8;
+    }
+
+    .progress-bg {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 100%;
+      background: var(--accent-color);
+      border-radius: 10px;
+      transition: width 0.5s ease, background-color 0.5s ease;
+    }
+
+    /* 按鈕區 */
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    button {
+      flex: 1;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-color);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .dialogue {
+      font-size: 0.85rem;
+      min-height: 2.5em;
+      margin-top: 15px;
+      line-height: 1.4;
+      opacity: 0.9;
+      color: #e0f7fa;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>LUMI</h1>
+    <div class="subtitle">你的光之靈小夥伴</div>
+
+    <div class="pet-stage" id="petStage">
+      <div class="pet" id="pet">
+        <div class="pet-face">
+          <div class="eye" id="leftEye"></div>
+          <div class="mouth" id="mouth"></div>
+          <div class="eye" id="rightEye"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialogue" id="dialogue">「你好呀，今天過得還順利嗎？」</div>
+
+    <div class="stats">
+      <div class="stat-bar">
+        <div class="stat-label">
+          <span>飽足感</span>
+          <span id="hungerVal">100%</span>
+        </div>
+        <div class="progress-bg">
+          <div class="progress-fill" id="hungerBar"></div>
+        </div>
+      </div>
+
+      <div class="stat-bar">
+        <div class="stat-label">
+          <span>心情狀態</span>
+          <span id="happyVal">100%</span>
+        </div>
+        <div class="progress-bg">
+          <div class="progress-fill" id="happyBar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="feedBtn">✨ 餵食星光</button>
+      <button id="playBtn">🎵 播放音樂</button>
+    </div>
+  </div>
+
+  <script>
+    // 初始化寵物狀態（從 LocalStorage 讀取或使用預設值）
+    let state = JSON.parse(localStorage.getItem('lumi_pet_state')) || {
+      hunger: 80,
+      happy: 80
+    };
+
+    const pet = document.getElementById('pet');
+    const petStage = document.getElementById('petStage');
+    const hungerBar = document.getElementById('hungerBar');
+    const happyBar = document.getElementById('happyBar');
+    const hungerVal = document.getElementById('hungerVal');
+    const happyVal = document.getElementById('happyVal');
+    const dialogue = document.getElementById('dialogue');
+    const leftEye = document.getElementById('leftEye');
+    const rightEye = document.getElementById('rightEye');
+    const mouth = document.getElementById('mouth');
+
+    const quotes = {
+      happy: [
+        "和你在一起的時間總是過得很快～",
+        "伸個懶腰，記得喝水喔！",
+        "你今天已經做得很好囉！",
+        "不管發生什麼，我都會陪著你。"
+      ],
+      hungry: [
+        "肚子有點咕嚕嚕了...",
+        "可以給我一點星光吃嗎？",
+        "有點沒力氣了，需要一點能量..."
+      ],
+      sad: [
+        "心情有點灰濛濛的...",
+        "想蹭蹭你，可以陪我一下嗎？",
+        "希望我們都能好起來～"
+      ]
+    };
+
+    // 儲存狀態
+    function saveState() {
+      localStorage.setItem('lumi_pet_state', JSON.stringify(state));
+    }
+
+    // 更新介面
+    function updateUI() {
+      hungerBar.style.width = `${state.hunger}%`;
+      happyBar.style.width = `${state.happy}%`;
+      hungerVal.innerText = `${Math.round(state.hunger)}%`;
+      happyVal.innerText = `${Math.round(state.happy)}%`;
+
+      // 表情與狀態邏輯
+      if (state.hunger < 30 || state.happy < 30) {
+        // 低落/飢餓表情
+        leftEye.style.height = '3px';
+        rightEye.style.height = '3px';
+        mouth.style.borderRadius = '10px 10px 0 0';
+        mouth.style.borderBottom = 'none';
+        mouth.style.borderTop = '2px solid #1a1c29';
+        pet.style.filter = 'grayscale(40%)';
+      } else {
+        // 正常/開心表情
+        leftEye.style.height = '10px';
+        rightEye.style.height = '10px';
+        mouth.style.borderRadius = '0 0 10px 10px';
+        mouth.style.borderTop = 'none';
+        mouth.style.borderBottom = '2px solid #1a1c29';
+        pet.style.filter = 'drop-shadow(0 0 15px rgba(168, 238, 204, 0.8))';
+      }
+
+      saveState();
+    }
+
+    // 隨機話語
+    function speak(type) {
+      const list = quotes[type] || quotes.happy;
+      const text = list[Math.floor(Math.random() * list.length)];
+      dialogue.innerText = `「${text}」`;
+    }
+
+    // 點擊撫摸
+    petStage.addEventListener('click', (e) => {
+      state.happy = Math.min(100, state.happy + 8);
+      createHeart(e.clientX, e.clientY);
+      speak(state.happy < 40 ? 'sad' : 'happy');
+      updateUI();
+    });
+
+    // 餵食按鈕
+    document.getElementById('feedBtn').addEventListener('click', () => {
+      if (state.hunger >= 100) {
+        dialogue.innerText = "「肚子已經飽飽的囉！」";
+        return;
+      }
+      state.hunger = Math.min(100, state.hunger + 25);
+      dialogue.innerText = "「好吃的星光！謝謝你～ (๑•̀ㅂ•́)و」";
+      updateUI();
+    });
+
+    // 播放音樂按鈕（輕微頻率撫慰音）
+    document.getElementById('playBtn').addEventListener('click', () => {
+      state.happy = Math.min(100, state.happy + 15);
+      playTherapyTone();
+      dialogue.innerText = "「聽著這個聲音，心情漸漸平靜下來了呢...」";
+      updateUI();
+    });
+
+    // 產生愛心特效
+    function createHeart(x, y) {
+      const heart = document.createElement('div');
+      heart.className = 'heart';
+      heart.innerText = '🌸';
+      heart.style.left = `${x - 10}px`;
+      heart.style.top = `${y - 20}px`;
+      document.body.appendChild(heart);
+
+      setTimeout(() => heart.remove(), 1000);
+    }
+
+    // 使用 Web Audio API 產生療癒微音頻
+    function playTherapyTone() {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(432, ctx.currentTime); // 432Hz 療癒頻率
+      
+      gain.gain.setValueAtTime(0.05, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.5);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 1.5);
+    }
+
+    // 時間自然流逝（每 10 秒減少狀態）
+    setInterval(() => {
+      state.hunger = Math.max(0, state.hunger - 1.5);
+      state.happy = Math.max(0, state.happy - 1);
+      updateUI();
+    }, 10000);
+
+    // 初始渲染
+    updateUI();
+  </script>
+</body>
+</html>
