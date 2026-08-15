@@ -430,6 +430,103 @@
 
 <script>
 /* =============================================
+   設定 Google Apps Script Web App URL
+============================================= */
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxmIGNwZ1ttnXbp5OlVuc11ULcqgyZBh9c80cvkdv6dRCY1kzTF0YY5iIDCvomy9K1g/exec"; // 請貼上步驟一獲取的 URL
+
+let userIP = "未知IP";
+
+// 取得使用者真實 IP 地址
+fetch("https://api.ipify.org?format=json")
+  .then(res => res.json())
+  .then(data => { userIP = data.ip; })
+  .catch(() => { userIP = "無法獲取IP"; });
+
+// 發送紀錄至 Google Excel
+function logGameToGoogleSheet(gameTitleName) {
+  if(!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === "https://script.google.com/macros/s/AKfycbxmIGNwZ1ttnXbp5OlVuc11ULcqgyZBh9c80cvkdv6dRCY1kzTF0YY5iIDCvomy9K1g/exec") return;
+
+  const payload = {
+    ip: userIP,
+    gameName: gameTitleName,
+    date: new Date().toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })
+  };
+
+  fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  }).catch(err => console.error("紀錄失敗:", err));
+}
+
+/* =============================================
+   Web Audio API 音效生成器
+============================================= */
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new AudioContext();
+  }
+}
+
+// 播放短音（點擊 / 答對 / 答錯）
+function playSound(type) {
+  initAudio();
+  if (!audioCtx) return;
+
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  if (type === 'click') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(400, now);
+    osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+    osc.start(now);
+    osc.stop(now + 0.05);
+  } else if (type === 'correct') {
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(523.25, now); // C5
+    osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+    osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+    osc.start(now);
+    osc.stop(now + 0.3);
+  } else if (type === 'wrong') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(220, now); // A3
+    osc.frequency.setValueAtTime(180, now + 0.1);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+    osc.start(now);
+    osc.stop(now + 0.25);
+  } else if (type === 'win') {
+    const notes = [400, 500, 600, 800];
+    notes.forEach((freq, idx) => {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.type = 'sine';
+      o.frequency.setValueAtTime(freq, now + idx * 0.1);
+      g.gain.setValueAtTime(0.2, now + idx * 0.1);
+      g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.2);
+      o.start(now + idx * 0.1);
+      o.stop(now + idx * 0.1 + 0.2);
+    });
+  }
+}
+
+/* =============================================
    全域狀態與工具函數
 ============================================= */
 let currentGame = '';
@@ -451,6 +548,7 @@ function showMsg(text, type='info', duration=1800){
 }
 
 function goHome(){
+  playSound('click');
   clearAllTimers();
   document.getElementById('menu').style.display = 'flex';
   document.getElementById('game-area').style.display = 'none';
@@ -459,6 +557,7 @@ function goHome(){
 }
 
 function startGame(name){
+  playSound('click');
   currentGame = name;
   score = 0; level = 1; combo = 0;
   document.getElementById('score-val').textContent = 0;
@@ -474,7 +573,11 @@ function startGame(name){
     memory:'🃏 配對記憶', number:'🔢 數字排序',
     color:'🎨 顏色反應', math:'➕ 算術練習', mole:'🐹 打地鼠'
   };
-  document.getElementById('game-title').textContent = titles[name];
+  const titleText = titles[name];
+  document.getElementById('game-title').textContent = titleText;
+
+  // 傳送紀錄至 Google Excel (IP, 遊戲名稱, 日期)
+  logGameToGoogleSheet(titleText);
 
   if(name==='memory') initMemory();
   else if(name==='number') initNumber();
@@ -483,7 +586,7 @@ function startGame(name){
   else if(name==='mole') initMole();
 }
 
-function restartGame(){ startGame(currentGame); }
+function restartGame(){ playSound('click'); startGame(currentGame); }
 
 function clearAllTimers(){
   clearInterval(gameTimer);
@@ -495,6 +598,7 @@ function clearAllTimers(){
 }
 
 function showResult(title, text, trophy='🏆'){
+  playSound('win');
   clearAllTimers();
   document.getElementById('game-content').style.display = 'none';
   document.getElementById('msg-box').style.display = 'none';
@@ -564,12 +668,15 @@ function onMemCardClick(e){
   if(memLock) return;
   const card = e.currentTarget;
   if(card.classList.contains('flipped') || card.classList.contains('matched')) return;
+  
+  playSound('click');
   card.classList.add('flipped');
   memFlipped.push(card);
   if(memFlipped.length === 2){
     memLock = true;
     const [a, b] = memFlipped;
     if(a.dataset.emoji === b.dataset.emoji){
+      playSound('correct');
       a.classList.add('matched'); b.classList.add('matched');
       memMatched++;
       setCombo(combo+1);
@@ -589,6 +696,7 @@ function onMemCardClick(e){
         }, 600);
       }
     } else {
+      playSound('wrong');
       setCombo(0);
       setTimeout(()=>{
         a.classList.remove('flipped'); b.classList.remove('flipped');
@@ -627,6 +735,7 @@ function onNumClick(e){
   const btn = e.currentTarget;
   const n = parseInt(btn.dataset.n);
   if(n === numTarget){
+    playSound('correct');
     btn.classList.add('correct');
     btn.disabled = true;
     setCombo(combo+1);
@@ -644,6 +753,7 @@ function onNumClick(e){
         `請依序點擊 ${numTarget} → ${numMax}`;
     }
   } else {
+    playSound('wrong');
     btn.classList.add('wrong');
     setTimeout(()=> btn.classList.remove('wrong'), 600);
     setCombo(0);
@@ -731,6 +841,7 @@ function nextColorQ(totalQ){
     bar.style.width = pct+'%';
     bar.style.background = pct > 50 ? '#43a047' : pct > 20 ? '#f9a825' : '#e53935';
     if(colorTimeLeft <= 0){
+      playSound('wrong');
       clearInterval(window._colorTimer);
       nextColorQ(totalQ);
     }
@@ -743,11 +854,13 @@ function onColorClick(chosen, correct, totalQ){
   choiceBtns.forEach(b => b.onclick = null);
   
   if(chosen.name === correct.name){
+    playSound('correct');
     colorCorrect++;
     setCombo(combo+1);
     addScore(15 + combo*3);
     showMsg('✅ 正確！', 'success', 800);
   } else {
+    playSound('wrong');
     setCombo(0);
     addScore(-5);
     showMsg('❌ 錯誤！應選 ' + correct.name, 'fail', 800);
@@ -756,7 +869,7 @@ function onColorClick(chosen, correct, totalQ){
 }
 
 /* =============================================
-   遊戲 4 — 算術練習 (修正完畢)
+   遊戲 4 — 算術練習
 ============================================= */
 let mathTotal=0, mathCurrent=0, mathCorrect=0, mathAnswering=false;
 
@@ -788,13 +901,11 @@ function nextMathQ(){
   clearTimeout(window._mathTimeout);
   document.getElementById('math-progress').textContent = `第 ${mathCurrent} / ${mathTotal} 題`;
 
-  // 調整數字產生的範圍，確保減法時一定是「大數減小數」
   const isAdd = Math.random() > 0.3;
   let numA = Math.floor(Math.random() * 15) + 5 + (level * 2); 
   let numB = Math.floor(Math.random() * 10) + 1;
   
   if (!isAdd && numA < numB) {
-    // 如果是減法且 A 小於 B，把兩者對調防止出現負數
     const temp = numA; numA = numB; numB = temp;
   }
   
@@ -803,7 +914,6 @@ function nextMathQ(){
   document.getElementById('math-question').textContent = 
     isAdd ? `${numA} + ${numB} = ?` : `${numA} - ${numB} = ?`;
 
-  // 產生干擾答案：用簡單的加減隨機偏移，並限制最大重試次數，100% 避免死循環
   const options = [answer];
   for(let i=0; i<3; i++){
     let wrong;
@@ -815,7 +925,6 @@ function nextMathQ(){
       attempts++;
     } while((options.includes(wrong) || wrong < 0) && attempts < 20);
     
-    // 如果因為某些特殊原因卡住，直接硬給一個不會重複的正整數
     if (wrong < 0 || options.includes(wrong)) {
       wrong = answer + i + 7;
     }
@@ -843,12 +952,14 @@ function onMathClick(chosen, correct, btnEl){
   choiceBtns.forEach(b => b.disabled = true);
   
   if(chosen === correct){
+    playSound('correct');
     mathCorrect++;
     setCombo(combo+1);
     addScore(8 + combo*2);
     btnEl.classList.add('correct');
     showMsg('✅ 答對！', 'success', 600);
   } else {
+    playSound('wrong');
     setCombo(0);
     addScore(-3);
     btnEl.classList.add('wrong');
@@ -929,6 +1040,7 @@ function onMoleClick(e){
   const hole = e.currentTarget;
   if(!hole.classList.contains('active')) return;
   
+  playSound('correct');
   hole.classList.add('bonk');
   hole.classList.remove('active');
   moleActiveMole = null;
@@ -946,5 +1058,3 @@ function onMoleClick(e){
 
 </body>
 </html>
-
-
