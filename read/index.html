@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>繁體中文文章朗讀器</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family:
+        "Noto Sans TC",
+        "Microsoft JhengHei",
+        Arial,
+        sans-serif;
+    background: linear-gradient(135deg, #101827, #18253a);
+    color: #fff;
+    min-height: 100vh;
+}
+
+.container {
+    width: 100%;
+    max-width: 900px;
+    margin: auto;
+    padding: 25px 16px 50px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 30px;
+}
+
+.header p {
+    margin-top: 8px;
+    color: #b9c5d6;
+}
+
+/* 卡片 */
+
+.card {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 22px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+/* 文章 */
+
+textarea {
+    width: 100%;
+    min-height: 280px;
+    resize: vertical;
+    border: none;
+    outline: none;
+    border-radius: 15px;
+    padding: 18px;
+    font-size: 18px;
+    line-height: 1.8;
+    font-family:
+        "Noto Sans TC",
+        "Microsoft JhengHei",
+        sans-serif;
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+/* 設定 */
+
+.settings {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+select {
+    width: 100%;
+    padding: 13px;
+    border-radius: 12px;
+    border: none;
+    font-size: 16px;
+    outline: none;
+}
+
+.counter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.counter button {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: none;
+    background: #334155;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.counter button:hover {
+    background: #475569;
+}
+
+#repeatCount {
+    width: 70px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* 控制按鈕 */
+
+.buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+}
+
+.btn {
+    border: none;
+    border-radius: 30px;
+    padding: 13px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+.play {
+    background: #22c55e;
+    color: white;
+}
+
+.pause {
+    background: #f59e0b;
+    color: white;
+}
+
+.stop {
+    background: #ef4444;
+    color: white;
+}
+
+.clear {
+    background: #64748b;
+    color: white;
+}
+
+/* 狀態 */
+
+.status {
+    text-align: center;
+    font-size: 17px;
+    margin-top: 18px;
+    color: #dbeafe;
+}
+
+/* 聲波 */
+
+.wave-box {
+    height: 180px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+    margin-top: 15px;
+}
+
+.bar {
+    width: 7px;
+    height: 25px;
+    border-radius: 10px;
+    background: #38bdf8;
+    transition: height 0.1s;
+}
+
+.wave-box.active .bar {
+    animation: wave 0.7s infinite ease-in-out;
+}
+
+.wave-box.active .bar:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.wave-box.active .bar:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.wave-box.active .bar:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+.wave-box.active .bar:nth-child(4) {
+    animation-delay: 0.3s;
+}
+
+.wave-box.active .bar:nth-child(5) {
+    animation-delay: 0.15s;
+}
+
+.wave-box.active .bar:nth-child(6) {
+    animation-delay: 0.25s;
+}
+
+.wave-box.active .bar:nth-child(7) {
+    animation-delay: 0.05s;
+}
+
+.wave-box.active .bar:nth-child(8) {
+    animation-delay: 0.2s;
+}
+
+.wave-box.active .bar:nth-child(9) {
+    animation-delay: 0.1s;
+}
+
+.wave-box.active .bar:nth-child(10) {
+    animation-delay: 0.3s;
+}
+
+@keyframes wave {
+    0%, 100% {
+        height: 20px;
+    }
+
+    50% {
+        height: 120px;
+    }
+}
+
+/* 播放進度 */
+
+.progress {
+    width: 100%;
+    height: 8px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 15px;
+}
+
+.progress-bar {
+    width: 0%;
+    height: 100%;
+    background: #38bdf8;
+    transition: width 0.3s;
+}
+
+/* 字數 */
+
+.word-count {
+    margin-top: 8px;
+    color: #94a3b8;
+    text-align: right;
+    font-size: 14px;
+}
+
+/* Footer */
+
+.footer {
+    text-align: center;
+    margin-top: 25px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+/* 手機 */
+
+@media (max-width: 650px) {
+
+    .container {
+        padding: 18px 12px 40px;
+    }
+
+    .header h1 {
+        font-size: 25px;
+    }
+
+    .settings {
+        grid-template-columns: 1fr;
+    }
+
+    textarea {
+        min-height: 260px;
+        font-size: 17px;
+    }
+
+    .wave-box {
+        height: 130px;
+    }
+
+    .bar {
+        width: 5px;
+    }
+
+    @keyframes wave {
+        0%, 100% {
+            height: 15px;
+        }
+
+        50% {
+            height: 90px;
+        }
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>🎙️ 繁體中文文章朗讀器</h1>
+        <p>輸入文章，選擇聲音，讓文章自然朗讀</p>
+    </div>
+
+
+    <!-- 文章 -->
+
+    <div class="card">
+
+        <label>📝 文章內容</label>
+
+        <textarea
+            id="article"
+            placeholder="請在這裡輸入繁體中文文章……
+
+例如：
+
+大家好，歡迎來到阿郎愛分享。
+
+每天花一點時間運動，讓身體保持活力，也讓心情更加愉快。
+
+今天，就讓我們一起動起來吧！">
+        </textarea>
+
+        <div class="word-count">
+            字數：<span id="wordCount">0</span>
+        </div>
+
+    </div>
+
+
+    <!-- 設定 -->
+
+    <div class="card">
+
+        <div class="settings">
+
+            <div>
+
+                <label>🎙️ 選擇聲音</label>
+
+                <select id="voiceSelect">
+                    <option>正在搜尋語音...</option>
+                </select>
+
+            </div>
+
+
+            <div>
+
+                <label>🔢 朗讀次數</label>
+
+                <div class="counter">
+
+                    <button onclick="changeRepeat(-1)">
+                        −
+                    </button>
+
+                    <input
+                        id="repeatCount"
+                        value="1"
+                        type="number"
+                        min="1"
+                        max="10">
+
+                    <button onclick="changeRepeat(1)">
+                        ＋
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="buttons">
+
+            <button
+                class="btn play"
+                onclick="startReading()">
+                ▶ 開始朗讀
+            </button>
+
+            <button
+                class="btn pause"
+                onclick="pauseReading()">
+                ⏸ 暫停
+            </button>
+
+            <button
+                class="btn pause"
+                onclick="resumeReading()">
+                ▶ 繼續
+            </button>
+
+            <button
+                class="btn stop"
+                onclick="stopReading()">
+                ⏹ 停止
+            </button>
+
+            <button
+                class="btn clear"
+                onclick="clearText()">
+                🗑 清除
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- 聲波 -->
+
+    <div class="card">
+
+        <div
+            id="waveBox"
+            class="wave-box">
+
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+
+        </div>
+
+
+        <div
+            id="status"
+            class="status">
+            🎤 等待開始朗讀
+        </div>
+
+
+        <div class="progress">
+
+            <div
+                id="progressBar"
+                class="progress-bar">
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="footer">
+        繁體中文文章朗讀器｜適合文章、養生文章、佛經、祝福文等內容
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================================
+   全域變數
+========================================= */
+
+let voices = [];
+
+let currentUtterance = null;
+
+let currentRepeat = 0;
+
+let totalRepeat = 1;
+
+let chunks = [];
+
+let currentChunk = 0;
+
+let stopped = false;
+
+
+/* =========================================
+   取得語音
+========================================= */
+
+function loadVoices() {
+
+    voices = speechSynthesis.getVoices();
+
+    const select =
+        document.getElementById("voiceSelect");
+
+    select.innerHTML = "";
+
+
+    if (voices.length === 0) {
+
+        const option =
+            document.createElement("option");
+
+        option.textContent =
+            "目前沒有找到語音";
+
+        select.appendChild(option);
+
+        return;
+    }
+
+
+    /*
+        優先顯示繁體中文語音
+    */
+
+    let zhVoices =
+        voices.filter(v =>
+            v.lang.toLowerCase().includes("zh-tw")
+            ||
+            v.lang.toLowerCase().includes("zh-hant")
+        );
+
+
+    /*
+        如果沒有繁體中文，
+        再找其他中文
+    */
+
+    if (zhVoices.length === 0) {
+
+        zhVoices =
+            voices.filter(v =>
+                v.lang.toLowerCase().startsWith("zh")
+            );
+
+    }
+
+
+    /*
+        沒有中文時，
+        顯示全部語音
+    */
+
+    const displayVoices =
+        zhVoices.length > 0
+        ? zhVoices
+        : voices;
+
+
+    displayVoices.forEach((voice, index) => {
+
+        const option =
+            document.createElement("option");
+
+        option.value =
+            voices.indexOf(voice);
+
+        option.textContent =
+            getVoiceName(voice);
+
+        select.appendChild(option);
+
+    });
+
+
+    /*
+        優先選擇第一個繁體中文聲音
+    */
+
+    if (zhVoices.length > 0) {
+
+        select.value =
+            voices.indexOf(zhVoices[0]);
+
+    }
+
+}
+
+
+/* =========================================
+   聲音名稱
+========================================= */
+
+function getVoiceName(voice) {
+
+    let gender = "";
+
+    const name =
+        voice.name.toLowerCase();
+
+
+    if (
+        name.includes("female")
+        ||
+        name.includes("woman")
+        ||
+        name.includes("mei")
+        ||
+        name.includes("susan")
+        ||
+        name.includes("samantha")
+    ) {
+
+        gender = " 👩";
+
+    }
+
+
+    if (
+        name.includes("male")
+        ||
+        name.includes("man")
+        ||
+        name.includes("daniel")
+        ||
+        name.includes("alex")
+    ) {
+
+        gender = " 👨";
+
+    }
+
+
+    return voice.name
+        + " (" + voice.lang + ")"
+        + gender;
+
+}
+
+
+/* =========================================
+   語音初始化
+========================================= */
+
+speechSynthesis.onvoiceschanged =
+    loadVoices;
+
+loadVoices();
+
+
+/* =========================================
+   字數
+========================================= */
+
+document
+    .getElementById("article")
+    .addEventListener("input", function() {
+
+        document
+            .getElementById("wordCount")
+            .textContent =
+            this.value.length;
+
+    });
+
+
+/* =========================================
+   朗讀次數
+========================================= */
+
+function changeRepeat(value) {
+
+    const input =
+        document.getElementById("repeatCount");
+
+    let number =
+        parseInt(input.value) || 1;
+
+    number += value;
+
+    if (number < 1)
+        number = 1;
+
+    if (number > 10)
+        number = 10;
+
+    input.value = number;
+
+}
+
+
+/* =========================================
+   將文章切成小段
+========================================= */
+
+function splitText(text) {
+
+    /*
+        SpeechSynthesis 在手機上
+        一次朗讀太長的文字容易中斷。
+
+        因此將文章切成小段。
+    */
+
+    const result = [];
+
+    const maxLength = 120;
+
+
+    for (
+        let i = 0;
+        i < text.length;
+        i += maxLength
+    ) {
+
+        result.push(
+            text.substring(
+                i,
+                i + maxLength
+            )
+        );
+
+    }
+
+    return result;
+
+}
+
+
+/* =========================================
+   開始朗讀
+========================================= */
+
+function startReading() {
+
+    const text =
+        document
+        .getElementById("article")
+        .value
+        .trim();
+
+
+    if (!text) {
+
+        alert("請先輸入文章內容！");
+
+        return;
+
+    }
+
+
+    stopReading();
+
+
+    totalRepeat =
+        parseInt(
+            document
+            .getElementById("repeatCount")
+            .value
+        ) || 1;
+
+
+    if (totalRepeat < 1)
+        totalRepeat = 1;
+
+    if (totalRepeat > 10)
+        totalRepeat = 10;
+
+
+    currentRepeat = 1;
+
+    chunks = splitText(text);
+
+    currentChunk = 0;
+
+    stopped = false;
+
+
+    speakCurrentChunk();
+
+}
+
+
+/* =========================================
+   朗讀目前段落
+========================================= */
+
+function speakCurrentChunk() {
+
+    if (stopped)
+        return;
+
+
+    if (
+        currentChunk >= chunks.length
+    ) {
+
+        /*
+            本次朗讀完成
+        */
+
+        if (
+            currentRepeat <
+            totalRepeat
+        ) {
+
+            currentRepeat++;
+
+            currentChunk = 0;
+
+            updateStatus();
+
+            setTimeout(
+                speakCurrentChunk,
+                500
+            );
+
+            return;
+
+        }
+
+
+        finishReading();
+
+        return;
+
+    }
+
+
+    const text =
+        chunks[currentChunk];
+
+
+    currentUtterance =
+        new SpeechSynthesisUtterance(text);
+
+
+    /*
+        選擇聲音
+    */
+
+    const voiceIndex =
+        parseInt(
+            document
+            .getElementById("voiceSelect")
+            .value
+        );
+
+
+    if (
+        voices[voiceIndex]
+    ) {
+
+        currentUtterance.voice =
+            voices[voiceIndex];
+
+    }
+
+
+    /*
+        繁體中文
+    */
+
+    currentUtterance.lang =
+        "zh-TW";
+
+
+    /*
+        語速
+    */
+
+    currentUtterance.rate =
+        0.95;
+
+
+    /*
+        音調
+    */
+
+    currentUtterance.pitch =
+        1;
+
+
+    /*
+        開始
+    */
+
+    currentUtterance.onstart =
+        function() {
+
+            document
+            .getElementById("waveBox")
+            .classList
+            .add("active");
+
+            updateStatus();
+
+        };
+
+
+    /*
+        本段完成
+    */
+
+    currentUtterance.onend =
+        function() {
+
+            currentChunk++;
+
+            updateProgress();
+
+            speakCurrentChunk();
+
+        };
+
+
+    /*
+        錯誤
+    */
+
+    currentUtterance.onerror =
+        function(event) {
+
+            console.log(
+                "Speech error:",
+                event
+            );
+
+            stopReading();
+
+        };
+
+
+    speechSynthesis.speak(
+        currentUtterance
+    );
+
+}
+
+
+/* =========================================
+   暫停
+========================================= */
+
+function pauseReading() {
+
+    if (
+        speechSynthesis.speaking
+    ) {
+
+        speechSynthesis.pause();
+
+        document
+        .getElementById("waveBox")
+        .classList
+        .remove("active");
+
+        document
+        .getElementById("status")
+        .textContent =
+        "⏸ 已暫停";
+
+    }
+
+}
+
+
+/* =========================================
+   繼續
+========================================= */
+
+function resumeReading() {
+
+    if (
+        speechSynthesis.paused
+    ) {
+
+        speechSynthesis.resume();
+
+        document
+        .getElementById("waveBox")
+        .classList
+        .add("active");
+
+        updateStatus();
+
+    }
+
+}
+
+
+/* =========================================
+   停止
+========================================= */
+
+function stopReading() {
+
+    stopped = true;
+
+    speechSynthesis.cancel();
+
+    currentUtterance = null;
+
+    document
+    .getElementById("waveBox")
+    .classList
+    .remove("active");
+
+    document
+    .getElementById("status")
+    .textContent =
+    "⏹ 已停止";
+
+}
+
+
+/* =========================================
+   完成
+========================================= */
+
+function finishReading() {
+
+    stopped = true;
+
+    document
+    .getElementById("waveBox")
+    .classList
+    .remove("active");
+
+    document
+    .getElementById("status")
+    .textContent =
+    "✅ 朗讀完成，共朗讀 "
+    + totalRepeat
+    + " 次";
+
+    document
+    .getElementById("progressBar")
+    .style.width =
+    "100%";
+
+}
+
+
+/* =========================================
+   狀態
+========================================= */
+
+function updateStatus() {
+
+    document
+    .getElementById("status")
+    .textContent =
+    "🎙️ 正在朗讀｜第 "
+    + currentRepeat
+    + " / "
+    + totalRepeat
+    + " 次";
+
+}
+
+
+/* =========================================
+   進度
+========================================= */
+
+function updateProgress() {
+
+    if (!chunks.length)
+        return;
+
+
+    const progress =
+        (
+            currentChunk /
+            chunks.length
+        ) * 100;
+
+
+    document
+    .getElementById("progressBar")
+    .style.width =
+    progress + "%";
+
+}
+
+
+/* =========================================
+   清除
+========================================= */
+
+function clearText() {
+
+    stopReading();
+
+    document
+    .getElementById("article")
+    .value = "";
+
+
+    document
+    .getElementById("wordCount")
+    .textContent =
+    "0";
+
+
+    document
+    .getElementById("progressBar")
+    .style.width =
+    "0%";
+
+
+    document
+    .getElementById("status")
+    .textContent =
+    "🎤 等待開始朗讀";
+
+}
+
+
+/* =========================================
+   防止手機長時間朗讀失效
+========================================= */
+
+setInterval(function() {
+
+    if (
+        speechSynthesis.speaking
+        &&
+        !speechSynthesis.paused
+    ) {
+
+        /*
+            某些瀏覽器在長時間朗讀時
+            會停止 speech engine。
+
+            這裡不強制 cancel，
+            只是保持頁面運作。
+        */
+
+    }
+
+}, 5000);
+
+</script>
+
+</body>
+</html>
